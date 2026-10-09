@@ -1,0 +1,14 @@
+# Real-Time Fuel Prices (MITECO / Promotesla API)
+# Powers the Tesla Economic Savings & Efficiency cards
+command_line:
+  - sensor:
+      name: "Fuel Price Gasolina 95"
+      unique_id: fuel_price_gasolina_95
+      command: 'curl -s -m 10 "https://promotesla.es/gas_api.php"'
+      value_template: "{{ value_json.data.NACIONAL.gas95 | default(1.807) }}"
+      unit_of_measurement: "€/L"
+      scan_interval: 3600
+      json_attributes:
+        - data
+        - last_updated
+        - date
