@@ -1,0 +1,1216 @@
+# =============================================================================
+# TESLA & V2C MISSION CONTROL DASHBOARD VIEW (HOME ASSISTANT LOVELACE)
+# =============================================================================
+# Author: AresLab / Jamie
+# Required HACS Frontend Cards:
+#   1. custom:button-card (https://github.com/custom-cards/button-card)
+#   2. custom:tesla-view-card (or your preferred 3D/interactive car card)
+#
+# Instructions:
+#   Paste this entire view under the 'views:' section in your Home Assistant
+#   Lovelace Raw Configuration Editor, or import it as a dedicated dashboard view.
+# =============================================================================
+
+title: Tesla & V2C Mission Control
+path: ve
+icon: mdi:car-electric
+theme: Backend-selected
+badges: []
+cards:
+- type: vertical-stack
+  cards:
+  - type: custom:button-card
+    show_name: false
+    show_icon: false
+    show_state: false
+    tap_action:
+      action: none
+    hold_action:
+      action: none
+    double_tap_action:
+      action: none
+    triggers_update:
+    - sensor.tesla_ble_garage_charge_level
+    - sensor.tesla_ble_garage_range
+    - number.tesla_ble_garage_charging_limit
+    - sensor.tesla_ble_garage_odometer
+    - sensor.tesla_ble_garage_charge_energy_added
+    - sensor.tesla_ble_garage_charge_distance_added
+    - sensor.tesla_ble_garage_minutes_to_limit
+    - sensor.tesla_ble_garage_charging_state
+    - binary_sensor.evse_trydan_charging
+    - binary_sensor.evse_trydan_connected
+    - sensor.evse_trydan_charge_power
+    - sensor.tesla_ble_garage_tyre_pressure_front_left
+    - sensor.tesla_ble_garage_tyre_pressure_front_right
+    - sensor.tesla_ble_garage_tyre_pressure_rear_left
+    - sensor.tesla_ble_garage_tyre_pressure_rear_right
+    - sensor.tesla_ble_garage_interior
+    - sensor.tesla_ble_garage_exterior
+    - number.tesla_ble_garage_climate_temperature
+    - switch.tesla_ble_garage_climate
+    - binary_sensor.tesla_ble_garage_ble_status
+    - binary_sensor.tesla_ble_garage_asleep
+    - lock.tesla_ble_garage_lock_car
+    - switch.tesla_ble_garage_sentry_mode
+    - cover.tesla_ble_garage_frunk
+    - binary_sensor.tesla_ble_garage_frunk
+    - cover.tesla_ble_garage_boot
+    - binary_sensor.tesla_ble_garage_boot
+    - binary_sensor.tesla_ble_garage_charge_flap
+    - binary_sensor.tesla_ble_garage_doors
+    styles:
+      card:
+      - background: 'linear-gradient(145deg, #0e131a 0%, #161d27 100%)'
+      - border-radius: 20px
+      - border: 1px solid rgba(0, 229, 255, 0.18)
+      - box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 0 15px rgba(0, 229, 255, 0.08)
+      - padding: 0px
+      - box-sizing: border-box
+      - overflow: hidden
+      - contain: paint
+      - pointer-events: auto !important
+      - cursor: default
+      grid:
+      - grid-template-areas: '"tesla_hub"'
+      - grid-template-columns: 1fr
+      - padding: 0px
+      - pointer-events: auto !important
+      custom_fields:
+        tesla_hub:
+        - width: 100%
+        - white-space: normal
+        - overflow: hidden
+        - pointer-events: auto !important
+    custom_fields:
+      tesla_hub: "[[[\n              // Store live hass instance globally\n              if (typeof hass !== 'undefined' &&\
+        \ hass) {\n                window._haHass = hass;\n              }\n\n              // Install global event handlers\
+        \ for robust touch/click interaction\n              if (!window._callTeslaHa) {\n                window._callTeslaHa\
+        \ = function(domain, service, serviceData, el) {\n                  if (el) {\n                    el.style.transform\
+        \ = 'scale(0.93)';\n                    el.style.opacity = '0.7';\n                    setTimeout(() => {\n      \
+        \                el.style.transform = '';\n                      el.style.opacity = '';\n                    }, 140);\n\
+        \                  }\n                  if (window._haHass && window._haHass.callService) {\n                    window._haHass.callService(domain,\
+        \ service, serviceData).catch(e => {\n                      console.warn('Tesla BLE callService error:', e);\n   \
+        \                 });\n                    return;\n                  }\n                  const ev = new CustomEvent('hass-service-call',\
+        \ {\n                    bubbles: true,\n                    composed: true,\n                    detail: { domain:\
+        \ domain, service: service, serviceData: serviceData }\n                  });\n                  const rootHa = document.querySelector('home-assistant');\n\
+        \                  if (rootHa && rootHa.dispatchEvent) rootHa.dispatchEvent(ev);\n                };\n\n         \
+        \       // Pure Local BLE climate toggle\n                window._toggleTeslaClimate = function(event, el) {\n   \
+        \               if (event) {\n                    if (event.stopPropagation) event.stopPropagation();\n          \
+        \          if (event.preventDefault) event.preventDefault();\n                  }\n                  let isCurrentlyOn\
+        \ = false;\n                  if (window._haHass && window._haHass.states) {\n                    const sBle = window._haHass.states['switch.tesla_ble_garage_climate'];\n\
+        \                    if (sBle && sBle.state === 'on') isCurrentlyOn = true;\n                  }\n               \
+        \   const targetService = isCurrentlyOn ? 'turn_off' : 'turn_on';\n                  window._callTeslaHa('switch',\
+        \ targetService, { entity_id: 'switch.tesla_ble_garage_climate' }, el);\n                };\n\n                //\
+        \ Pure Local BLE temperature adjustment\n                window._stepTeslaTemp = function(event, delta, el) {\n  \
+        \                if (event) {\n                    if (event.stopPropagation) event.stopPropagation();\n         \
+        \           if (event.preventDefault) event.preventDefault();\n                  }\n                  let curTemp\
+        \ = 20;\n                  if (window._haHass && window._haHass.states) {\n                    const numBle = window._haHass.states['number.tesla_ble_garage_climate_temperature'];\n\
+        \                    if (numBle && !isNaN(parseFloat(numBle.state))) curTemp = parseFloat(numBle.state);\n       \
+        \           }\n                  const newTemp = Math.max(16, Math.min(28, Math.round(curTemp + delta)));\n      \
+        \            window._callTeslaHa('number', 'set_value', { entity_id: 'number.tesla_ble_garage_climate_temperature',\
+        \ value: newTemp }, el);\n                };\n\n                // Precision Handle-Only Dragging (Tesla App Style)\n\
+        \                window._startTeslaHandleDrag = function(e, handleEl) {\n                  if (!handleEl) return;\n\
+        \                  if (e.stopPropagation) e.stopPropagation();\n                  try { handleEl.setPointerCapture(e.pointerId);\
+        \ } catch(err) {}\n\n                  const trackEl = handleEl.parentElement;\n                  if (!trackEl) return;\n\
+        \n                  const onMove = function(moveEv) {\n                    const rect = trackEl.getBoundingClientRect();\n\
+        \                    let pct = Math.round(((moveEv.clientX - rect.left) / rect.width) * 100);\n                  \
+        \  pct = Math.max(50, Math.min(100, pct));\n                    handleEl.style.left = pct + '%';\n               \
+        \     const badge = handleEl.querySelector('#tesla-bar-badge');\n                    if (badge) badge.innerText =\
+        \ pct + '% LIMIT';\n                    const headerTarget = document.querySelector('#tesla-target-display');\n  \
+        \                  if (headerTarget) headerTarget.innerText = 'Target: ' + pct + '%';\n                    const flowBar\
+        \ = trackEl.querySelector('#tesla-charging-flow-bar');\n                    if (flowBar) {\n                     \
+        \ const barSoc = parseFloat(flowBar.dataset.soc || 0);\n                      flowBar.style.width = Math.max(0, pct\
+        \ - barSoc) + '%';\n                    }\n                    if (moveEv.stopPropagation) moveEv.stopPropagation();\n\
+        \                  };\n\n                  const onUp = function(upEv) {\n                    handleEl.removeEventListener('pointermove',\
+        \ onMove);\n                    handleEl.removeEventListener('pointerup', onUp);\n                    handleEl.removeEventListener('pointercancel',\
+        \ onUp);\n                    try { handleEl.releasePointerCapture(upEv.pointerId); } catch(err) {}\n\n          \
+        \          const rect = trackEl.getBoundingClientRect();\n                    let pct = Math.round(((upEv.clientX\
+        \ - rect.left) / rect.width) * 100);\n                    pct = Math.max(50, Math.min(100, pct));\n\n            \
+        \        if (window._callTeslaHa) {\n                      window._callTeslaHa('number', 'set_value', {\n        \
+        \                entity_id: 'number.tesla_ble_garage_charging_limit',\n                        value: pct\n      \
+        \                });\n                    }\n                    if (upEv.stopPropagation) upEv.stopPropagation();\n\
+        \                  };\n\n                  handleEl.addEventListener('pointermove', onMove);\n                  handleEl.addEventListener('pointerup',\
+        \ onUp);\n                  handleEl.addEventListener('pointercancel', onUp);\n                };\n\n            \
+        \    // Optimistic Closure Toggler (Trunk & Frunk)\n                window._toggleTeslaClosure = function(event, closureType,\
+        \ el) {\n                  if (event) {\n                    if (event.stopPropagation) event.stopPropagation();\n\
+        \                    if (event.preventDefault) event.preventDefault();\n                  }\n                  if\
+        \ (!window._optimisticClosures) window._optimisticClosures = {};\n\n                  let entityId = 'cover.tesla_ble_garage_boot';\n\
+        \                  let isCurrentlyOpen = false;\n\n                  if (closureType === 'trunk') {\n            \
+        \        entityId = 'cover.tesla_ble_garage_boot';\n                    const s = window._haHass?.states[entityId]?.state;\n\
+        \                    isCurrentlyOpen = (s === 'open' || s === 'opening');\n                    if (window._optimisticClosures['trunk'])\
+        \ {\n                      isCurrentlyOpen = window._optimisticClosures['trunk'].isOpen;\n                    }\n\
+        \                  } else if (closureType === 'frunk') {\n                    entityId = 'cover.tesla_ble_garage_frunk';\n\
+        \                    const s = window._haHass?.states[entityId]?.state;\n                    isCurrentlyOpen = (s\
+        \ === 'open' || s === 'opening');\n                    if (window._optimisticClosures['frunk']) {\n              \
+        \        isCurrentlyOpen = window._optimisticClosures['frunk'].isOpen;\n                    }\n                  }\n\
+        \n                  const nextStateIsOpen = !isCurrentlyOpen;\n                  window._optimisticClosures[closureType]\
+        \ = {\n                    isOpen: nextStateIsOpen,\n                    expires: Date.now() + 45000\n           \
+        \       };\n\n                  if (el) {\n                    el.style.transform = 'scale(0.92)';\n             \
+        \       setTimeout(() => { el.style.transform = ''; }, 140);\n                    const label = el.querySelector('span');\n\
+        \                    const name = closureType === 'trunk' ? 'Trunk' : 'Frunk';\n                    if (label) label.innerText\
+        \ = nextStateIsOpen ? `${name} Open` : `${name} Closed`;\n                    el.style.background = nextStateIsOpen\
+        \ ? 'rgba(255, 82, 82, 0.18)' : 'rgba(0, 230, 118, 0.12)';\n                    el.style.borderColor = nextStateIsOpen\
+        \ ? 'rgba(255, 82, 82, 0.45)' : 'rgba(0, 230, 118, 0.35)';\n                    el.style.color = nextStateIsOpen ?\
+        \ '#ff5252' : '#00e676';\n                    const icon = el.querySelector('ha-icon');\n                    if (icon)\
+        \ icon.style.color = nextStateIsOpen ? '#ff5252' : '#00e676';\n                  }\n\n                  const action\
+        \ = nextStateIsOpen ? 'open_cover' : 'close_cover';\n                  window._callTeslaHa('cover', action, { entity_id:\
+        \ entityId }, el);\n                };\n              }\n\n              \n                // V2C Charger Non-Blocking\
+        \ Inline Confirmation Handlers (Pure DOM)\n                window._lastV2cTap = 0;\n                window._toggleV2cFromImage\
+        \ = function(event, el) {\n                  if (event) {\n                    if (event.stopPropagation) event.stopPropagation();\n\
+        \                    if (event.preventDefault) event.preventDefault();\n                  }\n                  const\
+        \ now = Date.now();\n                  if (now - (window._lastV2cTap || 0) < 400) return;\n                  window._lastV2cTap\
+        \ = now;\n\n                  const parent = el ? (el.parentElement || el.closest('#container')) : document;\n   \
+        \               const pill = parent ? parent.querySelector('#v2c-confirm-pill') : document.querySelector('#v2c-confirm-pill');\n\
+        \                  if (pill) {\n                    pill.style.display = 'flex';\n                    clearTimeout(window._v2cPromptTimer);\n\
+        \                    window._v2cPromptTimer = setTimeout(() => { pill.style.display = 'none'; }, 6000);\n        \
+        \          }\n                };\n\n                window._confirmV2cAction = function(event, el) {\n           \
+        \       if (event) {\n                    if (event.stopPropagation) event.stopPropagation();\n                  \
+        \  if (event.preventDefault) event.preventDefault();\n                  }\n                  const parent = el ? (el.closest('#v2c-confirm-pill')\
+        \ || document) : document;\n                  const pill = parent ? (parent.id === 'v2c-confirm-pill' ? parent : parent.querySelector('#v2c-confirm-pill'))\
+        \ : null;\n                  if (pill) pill.style.display = 'none';\n                  clearTimeout(window._v2cPromptTimer);\n\
+        \n                  const sBleState = window._haHass?.states['sensor.tesla_ble_garage_charging_state']?.state || '';\n\
+        \                  const evsePower = parseFloat(window._haHass?.states['sensor.evse_trydan_charge_power']?.state)\
+        \ || 0;\n                  const isPaused = window._haHass?.states['switch.evse_trydan_pause_session']?.state\
+        \ === 'on';\n                  const isCharging = (sBleState.toLowerCase() === 'charging') || (evsePower > 100);\n\
+        \n                  const targetAction = (isCharging && !isPaused) ? 'turn_on' : 'turn_off';\n                  window._callTeslaHa('switch',\
+        \ targetAction, { entity_id: 'switch.evse_trydan_pause_session' }, el);\n                };\n\n           \
+        \     window._cancelV2cAction = function(event, el) {\n                  if (event) {\n                    if (event.stopPropagation)\
+        \ event.stopPropagation();\n                    if (event.preventDefault) event.preventDefault();\n              \
+        \    }\n                  const parent = el ? (el.closest('#v2c-confirm-pill') || document) : document;\n        \
+        \          const pill = parent ? (parent.id === 'v2c-confirm-pill' ? parent : parent.querySelector('#v2c-confirm-pill'))\
+        \ : null;\n                  if (pill) pill.style.display = 'none';\n                  clearTimeout(window._v2cPromptTimer);\n\
+        \                };\n\n              const bleStatus = states['binary_sensor.tesla_ble_garage_ble_status']?.state\
+        \ === 'on';\n              const isAsleep = states['binary_sensor.tesla_ble_garage_asleep']?.state === 'on';\n   \
+        \           const lockState = states['lock.tesla_ble_garage_lock_car']?.state || 'locked';\n              const sentryState\
+        \ = states['switch.tesla_ble_garage_sentry_mode']?.state === 'on';\n\n              let frunkClosed = (states['cover.tesla_ble_garage_frunk']?.state\
+        \ === 'closed') && (states['binary_sensor.tesla_ble_garage_frunk']?.state !== 'on');\n              if (window._optimisticClosures\
+        \ && window._optimisticClosures['frunk'] && Date.now() < window._optimisticClosures['frunk'].expires) {\n        \
+        \        frunkClosed = !window._optimisticClosures['frunk'].isOpen;\n              }\n\n              let trunkClosed\
+        \ = (states['cover.tesla_ble_garage_boot']?.state === 'closed') && (states['binary_sensor.tesla_ble_garage_boot']?.state\
+        \ !== 'on');\n              if (window._optimisticClosures && window._optimisticClosures['trunk'] && Date.now() <\
+        \ window._optimisticClosures['trunk'].expires) {\n                trunkClosed = !window._optimisticClosures['trunk'].isOpen;\n\
+        \              }\n\n              const chargePortDoorOpen = states['binary_sensor.tesla_ble_garage_charge_flap']?.state\
+        \ === 'on';\n\n              // Battery & Range\n              const soc = parseFloat(states['sensor.tesla_ble_garage_charge_level']?.state)\
+        \ || 82;\n              const rangeNowKm = Math.round(parseFloat(states['sensor.tesla_ble_garage_range']?.state) ||\
+        \ 367);\n              const limitPct = parseFloat(states['number.tesla_ble_garage_charging_limit']?.state) || 50;\n\
+        \              const odoKm = Math.round(parseFloat(states['sensor.tesla_ble_garage_odometer']?.state) || 14963).toLocaleString();\n\
+        \              const energyAdded = (parseFloat(states['sensor.tesla_ble_garage_charge_energy_added']?.state) || 27.3).toFixed(1);\n\
+        \              const distAdded = Math.round(parseFloat(states['sensor.tesla_ble_garage_charge_distance_added']?.state)\
+        \ || 203);\n\n              // Charging Telemetry & State\n              const minsToLimitRaw = parseFloat(states['sensor.tesla_ble_garage_minutes_to_limit']?.state);\n\
+        \              const evseCharging = states['binary_sensor.evse_trydan_charging']?.state === 'on';\n       \
+        \       const evsePower = parseFloat(states['sensor.evse_trydan_charge_power']?.state) || 0;\n            \
+        \  const evseConnected = states['binary_sensor.evse_trydan_connected']?.state === 'on';\n              const\
+        \ isPaused = states['switch.evse_trydan_pause_session']?.state === 'on';\n              const teslaChargingState\
+        \ = states['sensor.tesla_ble_garage_charging_state']?.state || 'Disconnected';\n              const isCharging = evseCharging\
+        \ || teslaChargingState.toLowerCase() === 'charging' || evsePower > 100;\n              const isPluggedIn = evseConnected\
+        \ || isCharging || chargePortDoorOpen;\n\n              let timeLeftText = '';\n              if (!isNaN(minsToLimitRaw)\
+        \ && minsToLimitRaw > 0) {\n                const h = Math.floor(minsToLimitRaw / 60);\n                const m =\
+        \ Math.round(minsToLimitRaw % 60);\n                timeLeftText = `${h > 0 ? h + 'h ' : ''}${m}m left to ${limitPct}%\
+        \ limit`;\n              } else if (isCharging && evsePower > 200) {\n                const neededKwh = Math.max(0,\
+        \ (limitPct - soc) / 100 * 60);\n                const hours = neededKwh / (evsePower / 1000);\n                const\
+        \ totalM = Math.round(hours * 60);\n                if (totalM > 0) {\n                  const h = Math.floor(totalM\
+        \ / 60);\n                  const m = totalM % 60;\n                  timeLeftText = `${h > 0 ? h + 'h ' : ''}${m}m\
+        \ left to ${limitPct}%`;\n                } else {\n                  timeLeftText = 'At target limit';\n        \
+        \        }\n              }\n\n              // 4 Tires (Dynamic color: Red if below 2.8 bar, White if optimal >=\
+        \ 2.8 bar)\n              const fl_val = parseFloat(states['sensor.tesla_ble_garage_tyre_pressure_front_left']?.state)\
+        \ || 3.05;\n              const fr_val = parseFloat(states['sensor.tesla_ble_garage_tyre_pressure_front_right']?.state)\
+        \ || 3.15;\n              const rl_val = parseFloat(states['sensor.tesla_ble_garage_tyre_pressure_rear_left']?.state)\
+        \ || 2.98;\n              const rr_val = parseFloat(states['sensor.tesla_ble_garage_tyre_pressure_rear_right']?.state)\
+        \ || 3.15;\n\n              const fl_col = fl_val < 2.8 ? '#ff5252' : '#ffffff';\n              const fr_col = fr_val\
+        \ < 2.8 ? '#ff5252' : '#ffffff';\n              const rl_col = rl_val < 2.8 ? '#ff5252' : '#ffffff';\n           \
+        \   const rr_col = rr_val < 2.8 ? '#ff5252' : '#ffffff';\n\n              const fl = fl_val.toFixed(2).replace('.',\
+        \ ',');\n              const fr = fr_val.toFixed(2).replace('.', ',');\n              const rl = rl_val.toFixed(2).replace('.',\
+        \ ',');\n              const rr = rr_val.toFixed(2).replace('.', ',');\n\n              // Climate (Pure Local BLE)\n\
+        \              const inTemp = (parseFloat(states['sensor.tesla_ble_garage_interior']?.state) || 21.6).toFixed(1);\n\
+        \              const outTemp = (parseFloat(states['sensor.tesla_ble_garage_exterior']?.state) || 21.5).toFixed(1);\n\
+        \              const targetTemp = Math.round(parseFloat(states['number.tesla_ble_garage_climate_temperature']?.state)\
+        \ || 20);\n              const climateOn = states['switch.tesla_ble_garage_climate']?.state === 'on';\n\n        \
+        \      // Battery Color\n              let battColor = '#00e676';\n              if (soc < 20) battColor = '#ff5252';\n\
+        \              else if (soc < 45) battColor = '#ffb74d';\n\n              // Transparent V2C Trydan PNG\n        \
+        \      const v2cImg = '/api/image/serve/497e08e83b214671f3c1805f0df0f6b5/original';\n\n              return `\n  \
+        \              <div style=\"position: relative; pointer-events: auto !important; padding: 16px 14px 14px; box-sizing:\
+        \ border-box; width: 100%;\">\n                  \n                  <!-- Top Vehicle Dossier Header -->\n       \
+        \           <div style=\"display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;\"\
+        >\n                    <div style=\"display: flex; align-items: center; gap: 10px;\">\n                      <div\
+        \ style=\"width: 38px; height: 38px; border-radius: 10px; background: rgba(0, 229, 255, 0.1); border: 1px solid rgba(0,\
+        \ 229, 255, 0.25); display: flex; align-items: center; justify-content: center;\">\n                        <ha-icon\
+        \ icon=\"mdi:car-sports\" style=\"color: #00e5ff; --mdc-icon-size: 22px;\"></ha-icon>\n                      </div>\n\
+        \                      <div>\n                        <div style=\"font-size: 15px; font-weight: 800; color: #ffffff;\
+        \ letter-spacing: 0.3px;\">Mr. White</div>\n                        <div style=\"font-size: 10.5px; color: rgba(255,\
+        \ 255, 255, 0.55); font-weight: 500;\">Model 3 Highland \u2022 ${odoKm} km</div>\n                      </div>\n \
+        \                   </div>\n\n                    <!-- Connection & Sleep Pill Badges -->\n                    <div\
+        \ style=\"display: flex; gap: 6px;\">\n                      <div style=\"display: flex; align-items: center; gap:\
+        \ 4px; padding: 3px 8px; border-radius: 12px; background: ${bleStatus ? 'rgba(0, 230, 118, 0.12)' : 'rgba(255, 255,\
+        \ 255, 0.05)'}; border: 1px solid ${bleStatus ? 'rgba(0, 230, 118, 0.35)' : 'rgba(255, 255, 255, 0.1)'}; font-size:\
+        \ 9.5px; font-weight: 700; color: ${bleStatus ? '#00e676' : 'rgba(255, 255, 255, 0.5)'};\">\n                    \
+        \    <span style=\"width: 5px; height: 5px; border-radius: 50%; background: ${bleStatus ? '#00e676' : '#78909c'};\"\
+        ></span>\n                        ${bleStatus ? 'BLE Active' : 'BLE Standby'}\n                      </div>\n    \
+        \                  <div style=\"display: flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 12px;\
+        \ background: ${isAsleep ? 'rgba(120, 144, 156, 0.15)' : 'rgba(0, 229, 255, 0.12)'}; border: 1px solid ${isAsleep\
+        \ ? 'rgba(120, 144, 156, 0.3)' : 'rgba(0, 229, 255, 0.35)'}; font-size: 9.5px; font-weight: 700; color: ${isAsleep\
+        \ ? '#90a4ae' : '#00e5ff'};\">\n                        <span>${isAsleep ? '\U0001F4A4 Asleep' : '\u26A1 Awake'}</span>\n\
+        \                      </div>\n                    </div>\n                  </div>\n\n                  <!-- Battery\
+        \ & Range Telemetry Hub -->\n                  <div style=\"background: rgba(255, 255, 255, 0.03); border: 1px solid\
+        \ rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 12px 14px; margin-bottom: 14px;\">\n                  \
+        \  <div style=\"display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;\">\n   \
+        \                   <div>\n                        <div style=\"font-size: 9.5px; font-weight: 700; color: rgba(255,\
+        \ 255, 255, 0.5); text-transform: uppercase; letter-spacing: 0.5px;\">Battery Level</div>\n                      \
+        \  <div style=\"font-size: 26px; font-weight: 900; color: ${battColor}; line-height: 1.1;\">\n                   \
+        \       ${soc}%\n                        </div>\n                      </div>\n                      <div style=\"\
+        text-align: right;\">\n                        <div style=\"font-size: 9.5px; font-weight: 700; color: rgba(255, 255,\
+        \ 255, 0.5); text-transform: uppercase; letter-spacing: 0.5px;\">Current Range (Now)</div>\n                     \
+        \   <div style=\"font-size: 26px; font-weight: 900; color: #00e5ff; line-height: 1.1;\">\n                       \
+        \   ${rangeNowKm} <span style=\"font-size: 14px; font-weight: 700; color: #64b5f6;\">km</span>\n                 \
+        \       </div>\n                        <div style=\"font-size: 9px; color: rgba(255, 255, 255, 0.45); font-weight:\
+        \ 600;\">\u2022 Rated Estimate</div>\n                      </div>\n                    </div>\n\n               \
+        \     <!-- Single Interactive Draggable Battery Bar (Tesla App Style) -->\n                    <div style=\"position:\
+        \ relative; width: 100%; margin: 26px 0 16px; padding: 0; box-sizing: border-box; touch-action: pan-y;\">\n      \
+        \                \n                      <!-- Visual Bar Track -->\n                      <div id=\"tesla-bar-track\"\
+        \ style=\"position: relative; width: 100%; height: 16px; background: rgba(255, 255, 255, 0.08); border-radius: 8px;\
+        \ border: 1px solid rgba(255, 255, 255, 0.15); box-sizing: border-box; overflow: visible;\">\n                   \
+        \     \n                        <!-- Inner Clipped Fill Track (Zero black gap, perfect 7px rounded ends) -->\n   \
+        \                     <div style=\"position: absolute; inset: 0; border-radius: 7px; overflow: hidden; pointer-events:\
+        \ none;\">\n                          <!-- Solid SoC Fill (0 to soc%) -->\n                          <div id=\"tesla-soc-bar\"\
+        \ style=\"position: absolute; left: 0; top: 0; width: ${soc}%; height: 100%; background: linear-gradient(90deg, #00b0ff\
+        \ 0%, ${battColor} 100%); transition: width 0.3s ease; z-index: 2;\"></div>\n\n                          <!-- Continuous\
+        \ Liquid Flow to Limit (soc% to limitPct%, perfectly seamless) -->\n                          ${(isCharging && limitPct\
+        \ > soc) ? `\n                          <div id=\"tesla-charging-flow-bar\"\n                               data-soc=\"\
+        ${soc}\"\n                               style=\"position: absolute; left: ${soc}%; width: ${Math.max(0, limitPct\
+        \ - soc)}%; height: 100%; top: 0; background: rgba(0, 230, 118, 0.22); z-index: 1; overflow: hidden;\">\n        \
+        \                    <!-- Hardware-accelerated GPU liquid wave (100% Android & iOS WebKit compatible) -->\n      \
+        \                      <div class=\"tesla-liquid-wave\" style=\"position: absolute; top: 0; left: 0; width: 200%;\
+        \ height: 100%; background: linear-gradient(90deg, transparent 0%, rgba(0, 230, 118, 0.4) 25%, rgba(255, 255, 255,\
+        \ 0.85) 50%, rgba(0, 230, 118, 0.4) 75%, transparent 100%); animation: teslaLiquidWaveFlow 1.6s cubic-bezier(0.4,\
+        \ 0, 0.2, 1) infinite; -webkit-animation: teslaLiquidWaveFlow 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite; pointer-events:\
+        \ none;\"></div>\n                          </div>\n                          ` : ''}\n                        </div>\n\
+        \n                        <!-- Interactive Handle: 48px wide hit target centered on the vertical line -->\n      \
+        \                  <div id=\"tesla-bar-handle\"\n                             onpointerdown=\"window._startTeslaHandleDrag\
+        \ && window._startTeslaHandleDrag(event, this);\"\n                             style=\"position: absolute; left:\
+        \ ${limitPct}%; top: -16px; bottom: -16px; width: 48px; margin-left: -24px; cursor: ew-resize; z-index: 10; display:\
+        \ flex; flex-direction: column; align-items: center; justify-content: center; touch-action: none; -webkit-tap-highlight-color:\
+        \ transparent; user-select: none;\">\n                          <!-- Target Limit Pill Badge Above Handle -->\n  \
+        \                        <div id=\"tesla-bar-badge\" style=\"position: absolute; bottom: calc(100% - 9px); background:\
+        \ #00e5ff; color: #080c12; font-size: 9.5px; font-weight: 900; padding: 2px 7px; border-radius: 5px; box-shadow: 0\
+        \ 2px 10px rgba(0,229,255,0.8); white-space: nowrap; letter-spacing: 0.4px; pointer-events: none;\">\n           \
+        \                 ${Math.round(limitPct)}% LIMIT\n                          </div>\n                          <!--\
+        \ Triangular Arrow Pointer Pointing Down -->\n                          <div style=\"position: absolute; bottom: calc(100%\
+        \ - 14px); width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top:\
+        \ 5px solid #00e5ff; pointer-events: none;\"></div>\n                          <!-- The actual vertical line indicator\
+        \ with cyan glow -->\n                          <div style=\"width: 4px; height: 34px; background: #ffffff; border-radius:\
+        \ 2px; box-shadow: 0 0 14px #00e5ff, 0 0 4px #ffffff, 0 2px 6px rgba(0,0,0,0.9); pointer-events: none;\"></div>\n\
+        \                        </div>\n                      </div>\n                    </div>\n\n                    <!--\
+        \ Charging Status Banner -->\n                    ${isCharging ? `\n                    <div style=\"margin-top: 8px;\
+        \ display: flex; justify-content: space-between; align-items: center; font-size: 10px; font-weight: 700; background:\
+        \ rgba(0, 230, 118, 0.1); border-radius: 8px; padding: 5px 10px; border: 1px solid rgba(0, 230, 118, 0.35);\">\n \
+        \                     <div style=\"display: flex; align-items: center; gap: 5px; color: #00e676;\">\n            \
+        \            <ha-icon icon=\"mdi:lightning-bolt\" style=\"--mdc-icon-size: 14px; color: #00e676;\"></ha-icon>\n  \
+        \                      <span>Charging at ${(evsePower/1000).toFixed(1)} kW</span>\n                      </div>\n\
+        \                      <div style=\"color: #00e676; font-size: 9.5px; font-weight: 800;\">\n                     \
+        \   ${timeLeftText || `Target: ${limitPct}%`}\n                      </div>\n                    </div>\n        \
+        \            ` : ''}\n\n                    <!-- Session Energy & Distance HUD -->\n                    <div style=\"\
+        display: flex; justify-content: space-between; align-items: center; margin-top: 10px; padding-top: 8px; border-top:\
+        \ 1px solid rgba(255, 255, 255, 0.06); font-size: 10px; color: rgba(255, 255, 255, 0.7); font-weight: 600;\">\n  \
+        \                    <div style=\"display: flex; align-items: center; gap: 4px;\">\n                        <span>\u26A1\
+        </span> Energy Added: <b style=\"color: #00e5ff;\">+${energyAdded} kWh</b>\n                      </div>\n       \
+        \               <div style=\"display: flex; align-items: center; gap: 4px;\">\n                        <span>\U0001F697\
+        </span> Range Added: <b style=\"color: #ffd54f;\">+${distAdded} km</b>\n                      </div>\n           \
+        \           <div style=\"display: flex; align-items: center; gap: 4px;\">\n                        <span>\U0001F4CD\
+        </span> Garage Parked\n                      </div>\n                    </div>\n                  </div>\n\n    \
+        \              <!-- 2D Highland Top-Down Vehicle Cockpit & Sensors Canvas -->\n                  <div style=\"position:\
+        \ relative; width: 100%; max-width: 380px; margin: 0 auto 14px; height: 380px; background: radial-gradient(circle\
+        \ at 50% 50%, rgba(255, 255, 255, 0.04) 0%, rgba(0, 0, 0, 0.5) 75%); border-radius: 18px; border: 1px solid rgba(255,\
+        \ 255, 255, 0.06); overflow: hidden; contain: paint;\">\n                    \n                    <!-- Top Closure\
+        \ Controls Bar -->\n                    <div style=\"position: absolute; top: 10px; left: 10px; right: 10px; display:\
+        \ flex; justify-content: space-between; align-items: center; z-index: 7;\">\n                      <!-- Lock Badge\
+        \ -->\n                      <div onclick=\"window._callTeslaHa('lock', '${lockState === 'locked' ? 'unlock' : 'lock'}',\
+        \ {entity_id: 'lock.tesla_ble_garage_lock_car'}, this);\" style=\"cursor: pointer; background: ${lockState === 'locked'\
+        \ ? 'rgba(0, 230, 118, 0.12)' : 'rgba(255, 82, 82, 0.15)'}; border: 1px solid ${lockState === 'locked' ? 'rgba(0,\
+        \ 230, 118, 0.35)' : 'rgba(255, 82, 82, 0.4)'}; padding: 3px 8px; border-radius: 12px; font-size: 9.5px; font-weight:\
+        \ 700; color: ${lockState === 'locked' ? '#00e676' : '#ff5252'}; display: flex; align-items: center; gap: 4px;\">\n\
+        \                        <ha-icon icon=\"${lockState === 'locked' ? 'mdi:lock' : 'mdi:lock-open-variant'}\" style=\"\
+        --mdc-icon-size: 13px; color: ${lockState === 'locked' ? '#00e676' : '#ff5252'};\"></ha-icon>\n                  \
+        \      <span>${lockState === 'locked' ? 'LOCKED' : 'UNLOCKED'}</span>\n                      </div>\n\n          \
+        \            <!-- Frunk Closed/Open Pill -->\n                      <div onclick=\"window._toggleTeslaClosure(event,\
+        \ 'frunk', this);\" style=\"cursor: pointer; background: ${frunkClosed ? 'rgba(0, 230, 118, 0.12)' : 'rgba(255, 82,\
+        \ 82, 0.15)'}; border: 1px solid ${frunkClosed ? 'rgba(0, 230, 118, 0.35)' : 'rgba(255, 82, 82, 0.4)'}; padding: 3px\
+        \ 8px; border-radius: 12px; font-size: 9.5px; font-weight: 700; color: ${frunkClosed ? '#00e676' : '#ff5252'}; display:\
+        \ flex; align-items: center; gap: 4px; transition: all 0.15s ease;\">\n                        <ha-icon icon=\"mdi:car\"\
+        \ style=\"--mdc-icon-size: 13px; color: ${frunkClosed ? '#00e676' : '#ff5252'};\"></ha-icon>\n                   \
+        \     <span>${frunkClosed ? 'Frunk Closed' : 'Frunk Open'}</span>\n                      </div>\n\n              \
+        \        <!-- Sentry Mode Badge -->\n                      <div onclick=\"window._callTeslaHa('switch', 'toggle',\
+        \ {entity_id: 'switch.tesla_ble_garage_sentry_mode'}, this);\" style=\"cursor: pointer; background: ${sentryState\
+        \ ? 'rgba(244, 67, 54, 0.15)' : 'rgba(255, 255, 255, 0.05)'}; border: 1px solid ${sentryState ? 'rgba(244, 67, 54,\
+        \ 0.4)' : 'rgba(255, 255, 255, 0.1)'}; padding: 3px 8px; border-radius: 12px; font-size: 9.5px; font-weight: 700;\
+        \ color: ${sentryState ? '#ef5350' : 'rgba(255, 255, 255, 0.6)'}; display: flex; align-items: center; gap: 4px;\"\
+        >\n                        <ha-icon icon=\"mdi:cctv\" style=\"--mdc-icon-size: 13px; color: ${sentryState ? '#ef5350'\
+        \ : 'rgba(255, 255, 255, 0.6)'};\"></ha-icon>\n                        <span>${sentryState ? 'Sentry ON' : 'Sentry\
+        \ OFF'}</span>\n                      </div>\n                    </div>\n\n                    <!-- Car render moved\
+        \ into unified SVG below -->\n\n                    <!-- 4 Precise Tire Pressures (Snug Outside Wheel Arches, Red\
+        \ Alert if < 2.8 bar) -->\n                    <!-- FRONT LEFT TIRE (top: 92px) -->\n                    <div style=\"\
+        position: absolute; top: 92px; right: calc(50% + 70px); text-align: right; pointer-events: none;\">\n            \
+        \          <div style=\"font-size: 13.5px; font-weight: 700; color: ${fl_col}; letter-spacing: 0.2px; text-shadow:\
+        \ 0 1px 4px rgba(0,0,0,0.9);\">${fl}</div>\n                    </div>\n\n                    <!-- FRONT RIGHT TIRE\
+        \ (top: 92px) -->\n                    <div style=\"position: absolute; top: 92px; left: calc(50% + 70px); text-align:\
+        \ left; pointer-events: none;\">\n                      <div style=\"font-size: 13.5px; font-weight: 700; color: ${fr_col};\
+        \ letter-spacing: 0.2px; text-shadow: 0 1px 4px rgba(0,0,0,0.9);\">${fr}</div>\n                    </div>\n\n   \
+        \                 <!-- REAR LEFT TIRE (top: 260px) -->\n                    <div style=\"position: absolute; top:\
+        \ 260px; right: calc(50% + 70px); text-align: right; pointer-events: none;\">\n                      <div style=\"\
+        font-size: 13.5px; font-weight: 700; color: ${rl_col}; letter-spacing: 0.2px; text-shadow: 0 1px 4px rgba(0,0,0,0.9);\"\
+        >${rl}</div>\n                    </div>\n\n                    <!-- REAR RIGHT TIRE (top: 260px) -->\n          \
+        \          <div style=\"position: absolute; top: 260px; left: calc(50% + 70px); text-align: left; pointer-events:\
+        \ none;\">\n                      <div style=\"font-size: 13.5px; font-weight: 700; color: ${rr_col}; letter-spacing:\
+        \ 0.2px; text-shadow: 0 1px 4px rgba(0,0,0,0.9);\">${rr}</div>\n                    </div>\n\n                   \
+        \ <!-- BOTTOM CENTER PILL: TRUNK -->\n                    <div style=\"position: absolute; bottom: 12px; left: 50%;\
+        \ transform: translateX(-50%); z-index: 7;\">\n                      <div onclick=\"window._toggleTeslaClosure(event,\
+        \ 'trunk', this);\" style=\"cursor: pointer; background: ${trunkClosed ? 'rgba(0, 230, 118, 0.12)' : 'rgba(255, 82,\
+        \ 82, 0.15)'}; border: 1px solid ${trunkClosed ? 'rgba(0, 230, 118, 0.35)' : 'rgba(255, 82, 82, 0.4)'}; padding: 3px\
+        \ 8px; border-radius: 12px; font-size: 9.5px; font-weight: 700; color: ${trunkClosed ? '#00e676' : '#ff5252'}; display:\
+        \ flex; align-items: center; gap: 4px; transition: all 0.15s ease;\">\n                        <ha-icon icon=\"mdi:car\"\
+        \ style=\"--mdc-icon-size: 13px; color: ${trunkClosed ? '#00e676' : '#ff5252'};\"></ha-icon>\n                   \
+        \     <span>${trunkClosed ? 'Trunk Closed' : 'Trunk Open'}</span>\n                      </div>\n                \
+        \    </div>\n\n                                                                                                  \
+        \                      <!-- Unified Highland 2D Top-Down Render & Dynamic Cable SVG (Locked 1:1 Vector Space) -->\n\
+        \                    <svg viewBox=\"0 0 380 380\" style=\"position: absolute; inset: 0; width: 100%; height: 100%;\
+        \ pointer-events: none; z-index: 5;\">\n                      <defs>\n                        <filter id=\"v2cCableGlow\"\
+        \ x=\"-30%\" y=\"-30%\" width=\"160%\" height=\"160%\">\n                          <feGaussianBlur stdDeviation=\"\
+        3\" result=\"blur\" />\n                          <feMerge>\n                            <feMergeNode in=\"blur\"\
+        \ />\n                            <feMergeNode in=\"SourceGraphic\" />\n                          </feMerge>\n   \
+        \                     </filter>\n                        <filter id=\"carTopDropShadow\" x=\"-30%\" y=\"-30%\" width=\"\
+        160%\" height=\"160%\">\n                          <feDropShadow dx=\"0\" dy=\"0\" stdDeviation=\"12\" flood-color=\"\
+        #000000\" flood-opacity=\"0.85\" />\n                        </filter>\n                        <style>\n        \
+        \                  @keyframes v2cWaveSlide {\n                            0% { stroke-dashoffset: 24; }\n        \
+        \                    100% { stroke-dashoffset: 0; }\n                          }\n                          @-webkit-keyframes\
+        \ v2cWaveSlide {\n                            0% { stroke-dashoffset: 24; }\n                            100% { stroke-dashoffset:\
+        \ 0; }\n                          }\n                          .v2c-cable-pulse {\n                            animation:\
+        \ v2cWaveSlide 1.2s linear infinite;\n                            -webkit-animation: v2cWaveSlide 1.2s linear infinite;\n\
+        \                          }\n                        </style>\n                      </defs>\n\n                \
+        \      <!-- Clean Highland 2D Top-Down Render (Locked at exact SVG coordinates 59.33, 15) -->\n                  \
+        \    <image href=\"/api/image/serve/6463e9cfbb736ea62045a1c15ab29897/original\"\n                             xlink:href=\"\
+        /api/image/serve/6463e9cfbb736ea62045a1c15ab29897/original\"\n                             x=\"59.33\" y=\"15\" width=\"\
+        261.33\" height=\"350\"\n                             preserveAspectRatio=\"contain\"\n                          \
+        \   filter=\"url(#carTopDropShadow)\" />\n\n                      ${isPluggedIn ? `\n                      <!-- Base\
+        \ Outer Cable Shell -->\n                      <path d=\"M 62 350 C 82 368, 104 338, 126 308\"\n                 \
+        \           fill=\"none\" stroke=\"#161c22\" stroke-width=\"5\" stroke-linecap=\"round\" />\n\n                  \
+        \    <!-- Inner Cable Core -->\n                      <path d=\"M 62 350 C 82 368, 104 338, 126 308\"\n          \
+        \                  fill=\"none\" stroke=\"${isCharging ? '#203a32' : '#263238'}\" stroke-width=\"3\" stroke-linecap=\"\
+        round\" />\n\n                      <!-- Active Charging Pulse Waves -->\n                      ${isCharging ? `\n\
+        \                      <path class=\"v2c-cable-pulse\"\n                            d=\"M 62 350 C 82 368, 104 338,\
+        \ 126 308\"\n                            fill=\"none\" stroke=\"#00e676\" stroke-width=\"2.5\" stroke-linecap=\"round\"\
+        \n                            stroke-dasharray=\"10 14\" filter=\"url(#v2cCableGlow)\" />\n                      `\
+        \ : ''}\n\n                      <!-- Plug Connector Handle inserted into port at exact blue dot (134, 301) rotated\
+        \ -42 deg -->\n                      <g transform=\"translate(134, 301) rotate(-42)\">\n                        <!--\
+        \ Recessed socket housing in black taillight base -->\n                        <ellipse cx=\"0\" cy=\"0\" rx=\"2.5\"\
+        \ ry=\"3.8\" fill=\"#05070a\" stroke=\"#1c252d\" stroke-width=\"0.8\" />\n\n                        <!-- Plug connector\
+        \ handle inserted into port -->\n                        <rect x=\"-8.5\" y=\"-3\" width=\"8.5\" height=\"6\" rx=\"\
+        1.5\" fill=\"#161c22\" stroke=\"#37474f\" stroke-width=\"0.8\" />\n                        <!-- Strain relief collar\
+        \ meeting cable at 126, 308 -->\n                        <path d=\"M -8.5 -2.2 L -11.5 -1.5 L -11.5 1.5 L -8.5 2.2\
+        \ Z\" fill=\"#0f1418\" stroke=\"#263238\" stroke-width=\"0.6\" />\n                        <!-- Glowing charging indicator\
+        \ LED on handle -->\n                        <circle cx=\"-4\" cy=\"0\" r=\"1.5\" fill=\"${isCharging ? '#00e676'\
+        \ : '#78909c'}\" ${isCharging ? 'filter=\"url(#v2cCableGlow)\"' : ''} />\n                        <circle cx=\"-4\"\
+        \ cy=\"0\" r=\"0.8\" fill=\"${isCharging ? '#ffffff' : '#cfd8dc'}\" />\n                      </g>\n\n           \
+        \           <!-- Highland Charge Port Flap: JOINT DIRECTLY TO CAR BODY SEAM (NO GAP) -->\n                      <g\
+        \ id=\"chargePortFlap\">\n                        <!-- Highland Charge Port Flap: soft-edged triangle aligned with\
+        \ car taillight top triangle -->\n                        <path d=\"M 128.0 299.5 Q 129.8 295.0, 134.2 292.0 Q 135.0\
+        \ 296.5, 135.5 301.5 Z\"\n                              fill=\"#12161c\" stroke=\"#2e3842\" stroke-width=\"0.8\" stroke-linejoin=\"\
+        round\" stroke-linecap=\"round\" />\n                        \n                        <!-- Door thickness / bevel\
+        \ along right hinge edge -->\n                        <path d=\"M 134.2 292.0 Q 135.0 296.5, 135.5 301.5 L 134.2 300.8\
+        \ Q 133.8 296.0, 133.3 293.0 Z\"\n                              fill=\"#0a0d12\" opacity=\"0.65\" />\n\n         \
+        \               <!-- Red reflector facet: matching soft-pointed triangle aligned inside door -->\n               \
+        \         <path d=\"M 129.0 298.5 Q 130.5 295.5, 133.6 293.3 L 134.3 299.5 L 130.0 299.0 Z\"\n                   \
+        \           fill=\"#54141c\" stroke=\"#7a1a25\" stroke-width=\"0.5\" stroke-linejoin=\"round\" />\n\n            \
+        \            <!-- Subtle inner red highlight facet -->\n                        <path d=\"M 129.6 298.0 Q 131.0 296.0,\
+        \ 133.3 294.5 L 133.8 298.8 Z\"\n                              fill=\"#7a1b26\" opacity=\"0.75\" />\n\n          \
+        \              <!-- Hinge seam locking flap to car body seam up to taillight top apex -->\n                      \
+        \  <line x1=\"135.5\" y1=\"301.5\" x2=\"134.2\" y2=\"292.0\" stroke=\"#0a0d12\" stroke-width=\"1.2\" stroke-linecap=\"\
+        round\" />\n                      </g>` : ''}\n                    </svg>\n\n                    <!-- CHARGER UNIT\
+        \ IN BOTTOM-LEFT CORNER (Tap to Toggle Charging) -->\n                    <div class=\"v2c-charger-btn\"\n       \
+        \                  onclick=\"window._toggleV2cFromImage(event, this);\"\n                         onpointerup=\"window._toggleV2cFromImage(event,\
+        \ this);\"\n                         title=\"${(isCharging && !isPaused) ? 'Tap to STOP charging' : 'Tap to START\
+        \ charging'}\"\n                         style=\"position: absolute; bottom: 8px; left: 8px; z-index: 10; pointer-events:\
+        \ auto !important; cursor: pointer !important; touch-action: manipulation; transition: transform 0.15s ease;\">\n\
+        \                      <img src=\"${v2cImg}\" style=\"height: 78px; width: auto; object-fit: contain; pointer-events:\
+        \ none; filter: drop-shadow(0 4px 14px rgba(0,0,0,0.85)) drop-shadow(0 0 12px ${isCharging ? 'rgba(0,230,118,0.6)'\
+        \ : (isPluggedIn ? 'rgba(120,144,156,0.3)' : 'rgba(0,229,255,0.15)')});\" />\n                    </div>\n\n     \
+        \               <!-- Non-blocking inline confirmation pill -->\n                    <div id=\"v2c-confirm-pill\"\n\
+        \                         style=\"display: none; position: absolute; bottom: 20px; left: 86px; z-index: 30; background:\
+        \ rgba(14, 20, 27, 0.96); border: 1.5px solid ${(isCharging && !isPaused) ? '#ff5252' : '#00e676'}; border-radius:\
+        \ 12px; padding: 6px 10px; align-items: center; gap: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.9), 0 0 14px ${(isCharging\
+        \ && !isPaused) ? 'rgba(255,82,82,0.45)' : 'rgba(0,230,118,0.45)'}; pointer-events: auto !important; touch-action:\
+        \ manipulation;\">\n                      <span style=\"font-size: 11px; font-weight: 800; color: #ffffff; white-space:\
+        \ nowrap;\">\n                        ${(isCharging && !isPaused) ? 'STOP charging?' : 'START charging?'}\n      \
+        \                </span>\n                      <button onclick=\"window._confirmV2cAction(event, this);\"\n     \
+        \                         onpointerup=\"window._confirmV2cAction(event, this);\"\n                              style=\"\
+        background: ${(isCharging && !isPaused) ? '#ff5252' : '#00e676'}; color: #000; border: none; border-radius: 6px; padding:\
+        \ 4px 8px; font-size: 10px; font-weight: 800; cursor: pointer; touch-action: manipulation; box-shadow: 0 2px 6px rgba(0,0,0,0.3);\"\
+        >\n                        CONFIRM\n                      </button>\n                      <button onclick=\"window._cancelV2cAction(event,\
+        \ this);\"\n                              onpointerup=\"window._cancelV2cAction(event, this);\"\n                \
+        \              style=\"background: rgba(255,255,255,0.12); color: #cfd8dc; border: none; border-radius: 6px; padding:\
+        \ 4px 7px; font-size: 10px; font-weight: 700; cursor: pointer; touch-action: manipulation;\">\n                  \
+        \      &#10005;\n                      </button>\n                    </div>\n                    </div></div></div>\n\
+        \n                    <div style=\"display: flex; justify-content: space-between; align-items: center; margin-top:\
+        \ 10px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 10px; padding:\
+        \ 8px 12px;\">\n                      <!-- Climate Power Toggle Button -->\n                      <div class=\"climate-pwr-btn\"\
+        \n                           style=\"cursor: pointer; display: flex; align-items: center; gap: 8px; touch-action:\
+        \ manipulation; -webkit-tap-highlight-color: transparent; user-select: none;\"\n                           onclick=\"\
+        window._toggleTeslaClimate(event, this);\"\n                           onpointerup=\"window._toggleTeslaClimate(event,\
+        \ this);\">\n                        <div style=\"width: 32px; height: 32px; border-radius: 8px; background: ${climateOn\
+        \ ? 'rgba(0, 229, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)'}; border: 1px solid ${climateOn ? '#00e5ff' : 'rgba(255,\
+        \ 255, 255, 0.1)'}; display: flex; align-items: center; justify-content: center; transition: all 0.12s ease; ${climateOn\
+        \ ? 'box-shadow: 0 0 10px rgba(0, 229, 255, 0.35);' : ''}\">\n                          ${climateOn ? `\n        \
+        \                    <div class=\"fan-spinning\" style=\"display: inline-flex; align-items: center; justify-content:\
+        \ center; transform-origin: 50% 50%;\">\n                              <ha-icon icon=\"mdi:fan\" style=\"color: #00e5ff;\
+        \ --mdc-icon-size: 20px;\"></ha-icon>\n                            </div>\n                          ` : `\n     \
+        \                       <ha-icon icon=\"mdi:power\" style=\"color: rgba(255, 255, 255, 0.4); --mdc-icon-size: 18px;\"\
+        ></ha-icon>\n                          `}\n                        </div>\n                        <div>\n       \
+        \                   <div style=\"font-size: 11px; font-weight: 800; color: ${climateOn ? '#00e5ff' : '#ffffff'};\"\
+        >Climate ${climateOn ? 'Active (ON)' : 'Off'}</div>\n                          <div style=\"font-size: 9px; color:\
+        \ rgba(255,255,255,0.5);\">Tap to toggle A/C</div>\n                        </div>\n                      </div>\n\
+        \n                      <!-- Direct Temperature Stepper -->\n                      <div style=\"display: flex; align-items:\
+        \ center; gap: 8px;\">\n                        <button class=\"temp-step-btn\"\n                                onclick=\"\
+        window._stepTeslaTemp(event, -1, this);\"\n                                onpointerup=\"window._stepTeslaTemp(event,\
+        \ -1, this);\"\n                                style=\"width: 28px; height: 28px; border-radius: 6px; background:\
+        \ rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); color: #ffffff; font-weight: 900; font-size:\
+        \ 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; touch-action: manipulation;\"\
+        >-</button>\n                        <div style=\"text-align: center; min-width: 44px;\">\n                      \
+        \    <span style=\"font-size: 13.5px; font-weight: 800; color: #ffffff;\">${targetTemp}\xB0C</span>\n            \
+        \              <div style=\"font-size: 8px; color: rgba(255, 255, 255, 0.45); font-weight: 600;\">TARGET</div>\n \
+        \                       </div>\n                        <button class=\"temp-step-btn\"\n                        \
+        \        onclick=\"window._stepTeslaTemp(event, 1, this);\"\n                                onpointerup=\"window._stepTeslaTemp(event,\
+        \ 1, this);\"\n                                style=\"width: 28px; height: 28px; border-radius: 6px; background:\
+        \ rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); color: #ffffff; font-weight: 900; font-size:\
+        \ 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; touch-action: manipulation;\"\
+        >+</button>\n                      </div>\n                    </div>\n                  </div>\n\n              \
+        \  </div>\n\n                <style>\n                  @keyframes teslaLiquidWaveFlow {\n                    0% {\
+        \ transform: translateX(-50%); }\n                    100% { transform: translateX(0%); }\n                  }\n \
+        \                 @-webkit-keyframes teslaLiquidWaveFlow {\n                    0% { -webkit-transform: translateX(-50%);\
+        \ }\n                    100% { -webkit-transform: translateX(0%); }\n                  }\n                  .tesla-liquid-wave\
+        \ {\n                    animation: teslaLiquidWaveFlow 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;\n \
+        \                   -webkit-animation: teslaLiquidWaveFlow 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;\n\
+        \                    will-change: transform;\n                  }\n                  @keyframes energyFlowAnim {\n\
+        \                    0% { stroke-dashoffset: 28; }\n                    100% { stroke-dashoffset: 0; }\n         \
+        \         }\n                  @keyframes portTipPulse {\n                    0%, 100% { transform: scale(1); opacity:\
+        \ 0.8; }\n                    50% { transform: scale(1.4); opacity: 0.2; }\n                  }\n                \
+        \  .climate-pwr-btn:active {\n                    transform: scale(0.93);\n                  }\n                 \
+        \ .temp-step-btn:active {\n                    transform: scale(0.90);\n                    background: rgba(0, 229,\
+        \ 255, 0.3) !important;\n                  }\n                </style>\n              `;\n              ]]]"
+    extra_styles: |2
+
+      ha-card.disabled {
+        pointer-events: auto !important;
+        cursor: default !important;
+      }
+      #card, #container {
+        pointer-events: auto !important;
+      }
+      .v2c-charger-btn {
+        pointer-events: auto !important;
+        cursor: pointer !important;
+        touch-action: manipulation !important;
+      }
+      .v2c-charger-btn:active {
+        transform: scale(0.92) !important;
+      }
+  - type: custom:tesla-view-card
+    model: poppyseed
+    paint: PearlWhite
+    wheels: Glider
+    plate: eu
+    theme: dark
+    hotspots: true
+    camera: parked
+    entities:
+      charge_cable: binary_sensor.evse_trydan_connected
+      charge_port: binary_sensor.tesla_ble_garage_charge_flap
+      charging: sensor.tesla_ble_garage_charging_state
+      frunk: cover.tesla_ble_garage_frunk
+      trunk: cover.tesla_ble_garage_boot
+      lock: lock.tesla_ble_garage_lock_car
+      door_fl: binary_sensor.tesla_ble_garage_doors
+      door_fr: binary_sensor.tesla_ble_garage_doors
+      door_rl: binary_sensor.tesla_ble_garage_doors
+      door_rr: binary_sensor.tesla_ble_garage_doors
+      window_fl: binary_sensor.tesla_ble_garage_windows
+      window_fr: binary_sensor.tesla_ble_garage_windows
+      window_rl: binary_sensor.tesla_ble_garage_windows
+      window_rr: binary_sensor.tesla_ble_garage_windows
+      flash_lights: button.tesla_ble_garage_flash_light
+  - type: custom:button-card
+    show_name: false
+    show_icon: false
+    show_state: false
+    tap_action:
+      action: none
+    hold_action:
+      action: none
+    double_tap_action:
+      action: none
+    triggers_update:
+    - sensor.evse_trydan_charge_power
+    - sensor.evse_trydan_charge_energy
+    - sensor.evse_trydan_charge_time
+    - sensor.evse_trydan_photovoltaic_power
+    - sensor.evse_trydan_house_power
+    - binary_sensor.evse_trydan_connected
+    - binary_sensor.evse_trydan_charging
+    - switch.evse_trydan_dynamic_intensity_modulation
+    - switch.evse_trydan_pause_session
+    - switch.evse_trydan_lock_evse
+    - number.evse_trydan_intensity
+    - number.evse_trydan_min_intensity
+    - number.evse_trydan_max_intensity
+    - input_select.v2c_charging_profile
+    - select.garage_v2c_charge_mode
+    styles:
+      card:
+      - background: 'linear-gradient(145deg, #0e131a 0%, #161d27 100%)'
+      - border-radius: 20px
+      - border: 1px solid rgba(0, 230, 118, 0.25)
+      - box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), 0 0 15px rgba(0, 230, 118, 0.08)
+      - padding: 0px
+      - box-sizing: border-box
+      - overflow: hidden
+      - contain: paint
+      grid:
+      - grid-template-areas: '"v2c_hub"'
+      - grid-template-columns: 1fr
+      - padding: 0px
+      - pointer-events: auto !important
+      custom_fields:
+        v2c_hub:
+        - width: 100%
+        - white-space: normal
+        - overflow: visible
+        - pointer-events: auto !important
+    custom_fields:
+      v2c_hub: "[[[\n              if (typeof hass !== 'undefined' && hass) {\n                window._haHass = hass;\n  \
+        \            }\n\n              // Install V2C Charging Profile & Amps Controllers\n              if (!window._setV2cProfile)\
+        \ {\n                window._setV2cProfile = function(profileName, modeNum, el) {\n                  if (el) {\n \
+        \                   el.style.transform = 'scale(0.95)';\n                    setTimeout(() => { el.style.transform\
+        \ = ''; }, 140);\n                  }\n                  try {\n                    fetch('http://YOUR_CHARGER_IP/write/DynamicPowerMode='\
+        \ + modeNum, { mode: 'no-cors' });\n                  } catch(e) {}\n                  if (window._callTeslaHa) {\n\
+        \                    window._callTeslaHa('input_select', 'select_option', {\n                      entity_id: 'input_select.v2c_charging_profile',\n\
+        \                      option: profileName\n                    }, el);\n                    window._callTeslaHa('rest_command',\
+        \ 'v2c_set_dynamic_power_mode', {\n                      mode: modeNum\n                    }, el);\n            \
+        \      }\n                };\n\n                window._setV2cAmps = function(amps, el) {\n                  if (el)\
+        \ {\n                    el.style.transform = 'scale(0.92)';\n                    setTimeout(() => { el.style.transform\
+        \ = ''; }, 140);\n                  }\n                  try {\n                    fetch('http://YOUR_CHARGER_IP/write/Intensity='\
+        \ + amps, { mode: 'no-cors' });\n                  } catch(e) {}\n                  if (window._callTeslaHa) {\n \
+        \                   window._callTeslaHa('number', 'set_value', {\n                      entity_id: 'number.evse_trydan_intensity',\n\
+        \                      value: amps\n                    }, el);\n                  }\n                };\n\n     \
+        \           window._toggleV2cPause = function(currentlyPaused, el) {\n                  if (el) {\n              \
+        \      el.style.transform = 'scale(0.92)';\n                    setTimeout(() => { el.style.transform = ''; }, 140);\n\
+        \                  }\n                  const nextPause = currentlyPaused ? 0 : 1;\n                  try {\n    \
+        \                fetch('http://YOUR_CHARGER_IP/write/Paused=' + nextPause, { mode: 'no-cors' });\n                 \
+        \ } catch(e) {}\n                  if (window._callTeslaHa) {\n                    window._callTeslaHa('switch', currentlyPaused\
+        \ ? 'turn_off' : 'turn_on', {\n                      entity_id: 'switch.evse_trydan_pause_session'\n      \
+        \              }, el);\n                  }\n                };\n              }\n\n              const isConnected\
+        \ = states['binary_sensor.evse_trydan_connected']?.state === 'on';\n              const isCharging = states['binary_sensor.evse_trydan_charging']?.state\
+        \ === 'on';\n              const isLocked = states['switch.evse_trydan_lock_evse']?.state === 'on';\n     \
+        \         const paused = states['switch.evse_trydan_pause_session']?.state === 'on';\n              const dynamicMod\
+        \ = states['switch.evse_trydan_dynamic_intensity_modulation']?.state === 'on';\n\n              const chargePwrW\
+        \ = Math.round(parseFloat(states['sensor.evse_trydan_charge_power']?.state) || 0);\n              const chargePwrDisplay\
+        \ = chargePwrW >= 1000 ? (chargePwrW / 1000).toFixed(2) + ' kW' : chargePwrW + ' W';\n              const currentAmps\
+        \ = Math.round(parseFloat(states['number.evse_trydan_intensity']?.state) || 0);\n              const minAmps\
+        \ = Math.round(parseFloat(states['number.evse_trydan_min_intensity']?.state) || 6);\n              const maxAmps\
+        \ = Math.round(parseFloat(states['number.evse_trydan_max_intensity']?.state) || 29);\n\n              const\
+        \ solarPwrW = Math.round(parseFloat(states['sensor.evse_trydan_photovoltaic_power']?.state) || 0);\n      \
+        \        const solarPwrDisplay = solarPwrW >= 1000 ? (solarPwrW / 1000).toFixed(2) + ' kW' : solarPwrW + ' W';\n\n\
+        \              const housePwrW = Math.round(parseFloat(states['sensor.evse_trydan_house_power']?.state) ||\
+        \ 0);\n              const housePwrDisplay = housePwrW >= 1000 ? (housePwrW / 1000).toFixed(2) + ' kW' : housePwrW\
+        \ + ' W';\n\n              const sessionKwh = (parseFloat(states['sensor.evse_trydan_charge_energy']?.state)\
+        \ || 0).toFixed(2);\n              const chargeTimeSec = parseFloat(states['sensor.evse_trydan_charge_time']?.state)\
+        \ || 0;\n              let sessionDurationText = '0m';\n              if (chargeTimeSec > 0) {\n                const\
+        \ hours = Math.floor(chargeTimeSec / 3600);\n                const mins = Math.round((chargeTimeSec % 3600) / 60);\n\
+        \                sessionDurationText = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;\n              }\n\n       \
+        \       const activeProfile = states['input_select.v2c_charging_profile']?.state || 'FV + Min';\n              const\
+        \ solarSurplusW = Math.max(0, solarPwrW - housePwrW);\n\n              return `\n                <div style=\"position:\
+        \ relative; pointer-events: auto !important; padding: 16px 14px 14px; box-sizing: border-box; width: 100%;\">\n  \
+        \                \n                  <!-- V2C Station Header -->\n                  <div style=\"display: flex; justify-content:\
+        \ space-between; align-items: center; margin-bottom: 14px;\">\n                    <div style=\"display: flex; align-items:\
+        \ center; gap: 10px;\">\n                      <div style=\"width: 38px; height: 38px; border-radius: 10px; background:\
+        \ rgba(0, 230, 118, 0.12); border: 1px solid rgba(0, 230, 118, 0.3); display: flex; align-items: center; justify-content:\
+        \ center;\">\n                        <ha-icon icon=\"mdi:ev-station\" style=\"color: #00e676; --mdc-icon-size: 22px;\"\
+        ></ha-icon>\n                      </div>\n                      <div>\n                        <div style=\"font-size:\
+        \ 16px; font-weight: 800; color: #ffffff; letter-spacing: 0.2px; line-height: 1.1;\">V2C Trydan</div>\n          \
+        \            </div>\n                    </div>\n\n                    <div style=\"display: flex; gap: 6px;\">\n\
+        \                      <!-- Plug Connection Pill -->\n                      <div style=\"display: flex; align-items:\
+        \ center; gap: 4px; padding: 4px 8px; border-radius: 12px; background: ${isConnected ? 'rgba(0, 230, 118, 0.12)' :\
+        \ 'rgba(255, 255, 255, 0.05)'}; border: 1px solid ${isConnected ? 'rgba(0, 230, 118, 0.35)' : 'rgba(255, 255, 255,\
+        \ 0.1)'}; font-size: 9.5px; font-weight: 700; color: ${isConnected ? '#00e676' : 'rgba(255, 255, 255, 0.5)'};\">\n\
+        \                        <ha-icon icon=\"${isConnected ? 'mdi:power-plug' : 'mdi:power-plug-off'}\" style=\"--mdc-icon-size:\
+        \ 12px; color: ${isConnected ? '#00e676' : '#78909c'};\"></ha-icon>\n                        <span>${isConnected ?\
+        \ (isCharging ? 'Charging' : 'Connected') : 'Unplugged'}</span>\n                      </div>\n\n                \
+        \      <!-- EVSE Lock Pill -->\n                      <div onclick=\"window._callTeslaHa('switch', 'toggle', {entity_id:\
+        \ 'switch.evse_trydan_lock_evse'}, this);\" style=\"cursor: pointer; display: flex; align-items: center; gap:\
+        \ 4px; padding: 4px 8px; border-radius: 12px; background: ${isLocked ? 'rgba(255, 82, 82, 0.15)' : 'rgba(255, 255,\
+        \ 255, 0.05)'}; border: 1px solid ${isLocked ? 'rgba(255, 82, 82, 0.4)' : 'rgba(255, 255, 255, 0.1)'}; font-size:\
+        \ 9.5px; font-weight: 700; color: ${isLocked ? '#ff5252' : 'rgba(255, 255, 255, 0.7)'};\">\n                     \
+        \   <ha-icon icon=\"${isLocked ? 'mdi:lock' : 'mdi:lock-open-variant'}\" style=\"--mdc-icon-size: 12px; color: ${isLocked\
+        \ ? '#ff5252' : 'rgba(255, 255, 255, 0.7)'};\"></ha-icon>\n                        <span>${isLocked ? 'Locked' : 'Unlocked'}</span>\n\
+        \                      </div>\n                    </div>\n                  </div>\n\n                  <!-- 3-Pillar\
+        \ Power Flow Realtime Metrics -->\n                  <div style=\"display: grid; grid-template-columns: repeat(3,\
+        \ 1fr); gap: 8px; margin-bottom: 12px;\">\n                    \n                    <!-- Solar PV Production -->\n\
+        \                    <div style=\"background: rgba(255, 179, 0, 0.08); border: 1px solid rgba(255, 179, 0, 0.25);\
+        \ border-radius: 12px; padding: 10px 8px; text-align: center;\">\n                      <div style=\"font-size: 9px;\
+        \ font-weight: 700; color: #ffb74d; text-transform: uppercase;\">Solar PV</div>\n                      <div style=\"\
+        font-size: 17px; font-weight: 900; color: #ffb74d; line-height: 1.2;\">${solarPwrDisplay}</div>\n                \
+        \      <div style=\"font-size: 8px; color: rgba(255,255,255,0.5); font-weight: 600;\">Surplus: ${(solarSurplusW/1000).toFixed(2)}\
+        \ kW</div>\n                    </div>\n\n                    <!-- House Base Load -->\n                    <div style=\"\
+        background: rgba(0, 229, 255, 0.06); border: 1px solid rgba(0, 229, 255, 0.2); border-radius: 12px; padding: 10px\
+        \ 8px; text-align: center;\">\n                      <div style=\"font-size: 9px; font-weight: 700; color: #00e5ff;\
+        \ text-transform: uppercase;\">House Load</div>\n                      <div style=\"font-size: 17px; font-weight:\
+        \ 900; color: #00e5ff; line-height: 1.2;\">${housePwrDisplay}</div>\n                      <div style=\"font-size:\
+        \ 8px; color: rgba(255,255,255,0.5); font-weight: 600;\">Base Power</div>\n                    </div>\n\n        \
+        \            <!-- EV Charging Speed -->\n                    <div style=\"background: ${isCharging ? 'rgba(0, 230,\
+        \ 118, 0.12)' : 'rgba(255, 255, 255, 0.04)'}; border: 1px solid ${isCharging ? 'rgba(0, 230, 118, 0.35)' : 'rgba(255,\
+        \ 255, 255, 0.08)'}; border-radius: 12px; padding: 10px 8px; text-align: center;\">\n                      <div style=\"\
+        font-size: 9px; font-weight: 700; color: ${isCharging ? '#00e676' : 'rgba(255,255,255,0.6)'}; text-transform: uppercase;\"\
+        >EV Charging</div>\n                      <div style=\"font-size: 17px; font-weight: 900; color: ${isCharging ? '#00e676'\
+        \ : '#ffffff'}; line-height: 1.2;\">${chargePwrDisplay}</div>\n                      <div style=\"font-size: 8px;\
+        \ color: rgba(255,255,255,0.5); font-weight: 600;\">${currentAmps} A</div>\n                    </div>\n\n       \
+        \           </div>\n\n                  <!-- 3 Distinct Charging Profiles with Prominent Active Border & Glow -->\n\
+        \                  <div style=\"margin-bottom: 12px;\">\n                    <div style=\"font-size: 9px; font-weight:\
+        \ 700; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;\">Charging\
+        \ Profiles</div>\n                    <div style=\"display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;\"\
+        >\n                      \n                      <!-- Profile 1: Solar Only -->\n                      <div onclick=\"\
+        window._setV2cProfile('Solar Only', 2, this);\"\n                           style=\"cursor: pointer; background: ${activeProfile\
+        \ === 'Solar Only' ? 'rgba(255, 179, 0, 0.22)' : 'rgba(255, 255, 255, 0.03)'}; border: ${activeProfile === 'Solar\
+        \ Only' ? '2px solid #ffb74d' : '1px solid rgba(255, 255, 255, 0.08)'}; box-shadow: ${activeProfile === 'Solar Only'\
+        \ ? '0 0 14px rgba(255, 183, 77, 0.45)' : 'none'}; border-radius: 10px; padding: 8px 4px; text-align: center; transition:\
+        \ all 0.15s ease;\">\n                        <ha-icon icon=\"mdi:solar-power\" style=\"color: #ffb74d; --mdc-icon-size:\
+        \ 18px;\"></ha-icon>\n                        <div style=\"font-size: 11px; font-weight: 800; color: #ffb74d; margin-top:\
+        \ 2px;\">Solar Only</div>\n                        <div style=\"font-size: 8px; color: rgba(255,255,255,0.5);\">100%\
+        \ Surplus</div>\n                      </div>\n\n                      <!-- Profile 2: FV + Minimum Power -->\n  \
+        \                    <div onclick=\"window._setV2cProfile('FV + Min', 3, this);\"\n                           style=\"\
+        cursor: pointer; background: ${activeProfile === 'FV + Min' ? 'rgba(0, 229, 255, 0.22)' : 'rgba(255, 255, 255, 0.03)'};\
+        \ border: ${activeProfile === 'FV + Min' ? '2px solid #00e5ff' : '1px solid rgba(255, 255, 255, 0.08)'}; box-shadow:\
+        \ ${activeProfile === 'FV + Min' ? '0 0 14px rgba(0, 229, 255, 0.45)' : 'none'}; border-radius: 10px; padding: 8px\
+        \ 4px; text-align: center; transition: all 0.15s ease;\">\n                        <ha-icon icon=\"mdi:car-speed-limiter\"\
+        \ style=\"color: #00e5ff; --mdc-icon-size: 18px;\"></ha-icon>\n                        <div style=\"font-size: 11px;\
+        \ font-weight: 800; color: #00e5ff; margin-top: 2px;\">FV + Min</div>\n                        <div style=\"font-size:\
+        \ 8px; color: rgba(255,255,255,0.5);\">Solar + Min Grid</div>\n                      </div>\n\n                  \
+        \    <!-- Profile 3: Boost (Grid + Solar) -->\n                      <div onclick=\"window._setV2cProfile('Boost',\
+        \ 4, this);\"\n                           style=\"cursor: pointer; background: ${activeProfile === 'Boost' ? 'rgba(244,\
+        \ 67, 54, 0.22)' : 'rgba(255, 255, 255, 0.03)'}; border: ${activeProfile === 'Boost' ? '2px solid #ef5350' : '1px\
+        \ solid rgba(255, 255, 255, 0.08)'}; box-shadow: ${activeProfile === 'Boost' ? '0 0 14px rgba(239, 83, 80, 0.45)'\
+        \ : 'none'}; border-radius: 10px; padding: 8px 4px; text-align: center; transition: all 0.15s ease;\">\n         \
+        \               <ha-icon icon=\"mdi:rocket-launch\" style=\"color: #ef5350; --mdc-icon-size: 18px;\"></ha-icon>\n\
+        \                        <div style=\"font-size: 11px; font-weight: 800; color: #ef5350; margin-top: 2px;\">Boost</div>\n\
+        \                        <div style=\"font-size: 8px; color: rgba(255,255,255,0.5);\">Max Grid + Solar</div>\n   \
+        \                   </div>\n\n                    </div>\n                  </div>\n\n                  <!-- Quick\
+        \ Amperage Selectors -->\n                  <div style=\"margin-bottom: 12px;\">\n                    <div style=\"\
+        font-size: 9px; font-weight: 700; color: rgba(255, 255, 255, 0.5); text-transform: uppercase; margin-bottom: 6px;\
+        \ letter-spacing: 0.5px;\">Amperage Presets</div>\n                    <div style=\"display: flex; justify-content:\
+        \ space-between; gap: 4px;\">\n                      ${[6, 10, 13, 16, 20, 29].map(a => `\n                      \
+        \  <div onclick=\"window._setV2cAmps(${a}, this);\" style=\"cursor: pointer; flex: 1; text-align: center; padding:\
+        \ 6px 0; border-radius: 8px; background: ${currentAmps === a ? 'rgba(0, 230, 118, 0.25)' : 'rgba(255, 255, 255, 0.04)'};\
+        \ border: 1px solid ${currentAmps === a ? '#00e676' : 'rgba(255, 255, 255, 0.08)'}; font-size: 11px; font-weight:\
+        \ 800; color: ${currentAmps === a ? '#00e676' : '#ffffff'};\">\n                          ${a}A\n                \
+        \        </div>\n                      `).join('')}\n                    </div>\n                  </div>\n\n    \
+        \              <!-- Dynamic Modulation Toggle & Pause Button -->\n                  <div style=\"background: rgba(255,\
+        \ 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 12px; padding: 10px 12px; display:\
+        \ flex; justify-content: space-between; align-items: center; margin-bottom: 12px;\">\n                    <div>\n\
+        \                      <div style=\"font-size: 12px; font-weight: 800; color: #ffffff;\">Dynamic Modulation</div>\n\
+        \                      <div style=\"font-size: 9px; color: rgba(255, 255, 255, 0.5);\">Auto-adjusts Amps to home &\
+        \ solar</div>\n                    </div>\n                    <div style=\"display: flex; gap: 6px;\">\n        \
+        \              <div onclick=\"window._callTeslaHa('switch', 'toggle', {entity_id: 'switch.evse_trydan_dynamic_intensity_modulation'},\
+        \ this);\" style=\"cursor: pointer; padding: 5px 10px; border-radius: 8px; background: ${dynamicMod ? 'rgba(0, 230,\
+        \ 118, 0.2)' : 'rgba(255, 255, 255, 0.05)'}; border: 1px solid ${dynamicMod ? '#00e676' : 'rgba(255, 255, 255, 0.1)'};\
+        \ font-size: 10px; font-weight: 800; color: ${dynamicMod ? '#00e676' : '#ffffff'};\">\n                        ${dynamicMod\
+        \ ? 'Active (ON)' : 'Disabled'}\n                      </div>\n                      <div onclick=\"window._toggleV2cPause(${paused\
+        \ ? 1 : 0}, this);\" style=\"cursor: pointer; padding: 5px 10px; border-radius: 8px; background: ${paused ? 'rgba(255,\
+        \ 179, 0, 0.2)' : 'rgba(255, 255, 255, 0.05)'}; border: 1px solid ${paused ? '#ffb74d' : 'rgba(255, 255, 255, 0.1)'};\
+        \ font-size: 10px; font-weight: 800; color: ${paused ? '#ffb74d' : '#ffffff'};\">\n                        ${paused\
+        \ ? 'Paused' : 'Pause'}\n                      </div>\n                    </div>\n                  </div>\n\n  \
+        \                <!-- Session Statistics Footer (Accurate hardware metrics) -->\n                  <div style=\"display:\
+        \ flex; justify-content: space-between; align-items: center; font-size: 10px; color: rgba(255, 255, 255, 0.65); font-weight:\
+        \ 600; padding-top: 4px;\">\n                    <div style=\"display: flex; align-items: center; gap: 8px;\">\n \
+        \                     <div>Session: <b style=\"color: #00e676;\">${sessionKwh} kWh</b></div>\n                   \
+        \   <span style=\"color: rgba(255,255,255,0.25);\">\u2022</span>\n                      <div>Duration: <b style=\"\
+        color: #00e5ff;\">${sessionDurationText}</b></div>\n                    </div>\n                    <div>Limits: <b>${minAmps}A\
+        \ min \u2022 ${maxAmps}A max</b></div>\n                  </div>\n\n                </div>\n              `;\n   \
+        \           ]]]"
+  - type: custom:button-card
+    name: Car Charging
+    show_name: false
+    show_state: false
+    show_icon: false
+    tap_action:
+      action: none
+    triggers_update:
+    - sensor.v2c_charging_stats
+    - sensor.tesla_ble_garage_charge_energy_added
+    - sensor.tesla_ble_garage_charge_distance_added
+    - sensor.tesla_ble_garage_charging_state
+    - sensor.precio_kwh
+    styles:
+      card:
+      - background: 'linear-gradient(160deg, #10141c 0%, #161c26 100%)'
+      - border-radius: 20px
+      - border: 1px solid rgba(0, 230, 118, 0.2)
+      - box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6)
+      - padding: 16px
+      - color: '#ffffff'
+      - pointer-events: auto !important
+      - cursor: default
+      grid:
+      - grid-template-areas: '''cost'''
+      - grid-template-columns: 1fr
+      - padding: 0px
+      - pointer-events: auto !important
+      custom_fields:
+        cost:
+        - width: 100%
+        - white-space: normal
+        - overflow: visible
+        - pointer-events: auto !important
+    custom_fields:
+      cost: "[[[\n  const cardElement = this;\n  const statsEnt = states['sensor.v2c_charging_stats'];\n  const teslaEnergyEnt\
+        \ = states['sensor.tesla_ble_garage_charge_energy_added'];\n  const teslaDistEnt = states['sensor.tesla_ble_garage_charge_distance_added'];\n\
+        \  const teslaStateEnt = states['sensor.tesla_ble_garage_charging_state'];\n  \n  const attrs = statsEnt ? statsEnt.attributes\
+        \ : {};\n  const month = attrs.month_summary || {};\n  const fw = attrs.firmware || {};\n  const fwInstalled = fw.installed\
+        \ || '2.5.1';\n  const fwUpdate = fw.update_available === true;\n  const fwLatest = fw.latest || fwInstalled;\n\n\
+        \  const monthsDict = attrs.months || {};\n  const sortedMonths = (attrs.sorted_months && attrs.sorted_months.length\
+        \ > 0) ? attrs.sorted_months : Object.keys(monthsDict);\n  const currentMonthKey = sortedMonths.length > 0 ? sortedMonths[0]\
+        \ : '2026-10';\n\n  if (!window._v2c_selected_month_key) {\n    window._v2c_selected_month_key = currentMonthKey;\n\
+        \  }\n\n  let activeMonthKey = window._v2c_selected_month_key;\n  if (!monthsDict[activeMonthKey]) {\n    activeMonthKey\
+        \ = currentMonthKey;\n    window._v2c_selected_month_key = currentMonthKey;\n  }\n\n  const activeMonthData = monthsDict[activeMonthKey]\
+        \ || month;\n  const activeMonthIdx = sortedMonths.indexOf(activeMonthKey);\n  const canGoBack = activeMonthIdx <\
+        \ sortedMonths.length - 1;\n  const canGoForward = activeMonthIdx > 0;\n  const isCurrentMonth = (activeMonthKey ===\
+        \ currentMonthKey);\n  \n  // Per-month sessions filtered to remove 0 kWh momentary handshakes\n  const rawMonthSessions\
+        \ = activeMonthData.sessions || [];\n  const monthSessions = rawMonthSessions.filter(s => (s.energy_kwh || 0) > 0.05);\n\
+        \  const hasSessions = (monthSessions.length > 0);\n  \n  const isCharging = teslaStateEnt && teslaStateEnt.state\
+        \ === 'Charging';\n  \n  // Robust touch & click event binding pattern from AresLab APsystems\n  window._v2c_cost_card\
+        \ = cardElement;\n  window._selectV2cSession = function(id, card) {\n    if (!id) return;\n    window._v2c_selected_session_id\
+        \ = Number(id);\n    const targetCard = card || cardElement || window._v2c_cost_card;\n    if (targetCard && typeof\
+        \ targetCard.requestUpdate === 'function') {\n      targetCard.requestUpdate('_config');\n    }\n  };\n\n  window._stepV2cMonth\
+        \ = function(dir, card) {\n    const curIdx = sortedMonths.indexOf(window._v2c_selected_month_key || currentMonthKey);\n\
+        \    const newIdx = curIdx - dir;\n    if (newIdx >= 0 && newIdx < sortedMonths.length) {\n      window._v2c_selected_month_key\
+        \ = sortedMonths[newIdx];\n      // Reset selected session so the newly selected month loads cleanly\n      window._v2c_selected_session_id\
+        \ = null;\n      const targetCard = card || cardElement || window._v2c_cost_card;\n      if (targetCard && typeof\
+        \ targetCard.requestUpdate === 'function') {\n        targetCard.requestUpdate('_config');\n      }\n    }\n  };\n\
+        \n  window._resetV2cMonth = function(card) {\n    window._v2c_selected_month_key = currentMonthKey;\n    window._v2c_selected_session_id\
+        \ = null;\n    const targetCard = card || cardElement || window._v2c_cost_card;\n    if (targetCard && typeof targetCard.requestUpdate\
+        \ === 'function') {\n      targetCard.requestUpdate('_config');\n    }\n  };\n\n  if (cardElement && !cardElement._v2cListenersAttached)\
+        \ {\n    cardElement._v2cListenersAttached = true;\n    let touchStartX = 0;\n    let touchStartY = 0;\n    window._isV2cScrolling\
+        \ = false;\n\n    cardElement.addEventListener('touchstart', (e) => {\n      if (e.touches && e.touches[0]) {\n  \
+        \      touchStartX = e.touches[0].clientX;\n        touchStartY = e.touches[0].clientY;\n        window._isV2cScrolling\
+        \ = false;\n      }\n    }, { passive: true, capture: true });\n\n    cardElement.addEventListener('touchmove', (e)\
+        \ => {\n      if (e.touches && e.touches[0]) {\n        const dx = Math.abs(e.touches[0].clientX - touchStartX);\n\
+        \        const dy = Math.abs(e.touches[0].clientY - touchStartY);\n        if (dx > 8 || dy > 8) {\n          window._isV2cScrolling\
+        \ = true;\n        }\n      }\n    }, { passive: true, capture: true });\n\n    cardElement.addEventListener('touchend',\
+        \ (e) => {\n      if (window._isV2cScrolling) {\n        setTimeout(() => { window._isV2cScrolling = false; }, 80);\n\
+        \        return;\n      }\n      const path = e.composedPath ? e.composedPath() : [];\n      for (let i = 0; i < path.length;\
+        \ i++) {\n        const el = path[i];\n        if (el && el.getAttribute) {\n          if (el.getAttribute('data-action')\
+        \ === 'step-month') {\n            const dir = parseInt(el.getAttribute('data-dir'), 10);\n            window._stepV2cMonth(dir,\
+        \ cardElement);\n            if (e.preventDefault) e.preventDefault();\n            break;\n          }\n        \
+        \  if (el.getAttribute('data-action') === 'reset-month') {\n            window._resetV2cMonth(cardElement);\n    \
+        \        if (e.preventDefault) e.preventDefault();\n            break;\n          }\n          if (el.getAttribute('data-session-id'))\
+        \ {\n            const sid = el.getAttribute('data-session-id');\n            window._selectV2cSession(sid, cardElement);\n\
+        \            break;\n          }\n        }\n      }\n    }, { passive: false, capture: true });\n\n    cardElement.addEventListener('click',\
+        \ (e) => {\n      if (window._isV2cScrolling) {\n        e.stopPropagation();\n        return;\n      }\n      const\
+        \ path = e.composedPath ? e.composedPath() : [];\n      for (let i = 0; i < path.length; i++) {\n        const el\
+        \ = path[i];\n        if (el && el.getAttribute) {\n          if (el.getAttribute('data-action') === 'step-month')\
+        \ {\n            const dir = parseInt(el.getAttribute('data-dir'), 10);\n            window._stepV2cMonth(dir, cardElement);\n\
+        \            e.stopPropagation();\n            break;\n          }\n          if (el.getAttribute('data-action') ===\
+        \ 'reset-month') {\n            window._resetV2cMonth(cardElement);\n            e.stopPropagation();\n          \
+        \  break;\n          }\n          if (el.getAttribute('data-session-id')) {\n            const sid = el.getAttribute('data-session-id');\n\
+        \            window._selectV2cSession(sid, cardElement);\n            break;\n          }\n        }\n      }\n  \
+        \  }, true);\n  }\n\n  // Determine active session within the selected month\n  let activeSession = null;\n  if (window._v2c_selected_session_id\
+        \ && hasSessions) {\n    activeSession = monthSessions.find(s => Number(s.id) === Number(window._v2c_selected_session_id));\n\
+        \  }\n  // Default to first real charging session of this month if none selected or not found\n  if (!activeSession\
+        \ && hasSessions) {\n    activeSession = monthSessions[0];\n    window._v2c_selected_session_id = Number(activeSession.id);\n\
+        \  }\n  \n  // Calculate top KPI values based on active session or active month totals\n  const energyKwh = hasSessions\
+        \ && activeSession\n    ? activeSession.energy_kwh.toFixed(2)\n    : (activeMonthData.energy_kwh !== undefined ? activeMonthData.energy_kwh.toFixed(2)\
+        \ : '0.00');\n\n  const distAdded = hasSessions && activeSession\n    ? Math.round(parseFloat(energyKwh) * 6.5)\n\
+        \    : (activeMonthData.energy_kwh ? Math.round(activeMonthData.energy_kwh * 6.5) : 0);\n\n  const costEur = hasSessions\
+        \ && activeSession\n    ? (activeSession.cost_eur !== undefined ? activeSession.cost_eur.toFixed(2) : '0.00')\n  \
+        \  : (activeMonthData.cost_eur !== undefined ? activeMonthData.cost_eur.toFixed(2) : '0.00');\n\n  const savingsEur\
+        \ = hasSessions && activeSession\n    ? (activeSession.savings_eur !== undefined ? activeSession.savings_eur.toFixed(2)\
+        \ : '0.00')\n    : (activeMonthData.savings_eur !== undefined ? activeMonthData.savings_eur.toFixed(2) : '0.00');\n\
+        \n  const sessionDate = hasSessions && activeSession ? (activeSession.date_short || 'Charge Session') : (activeMonthData.full_label\
+        \ || activeMonthData.label || 'October 2026');\n  const sessionDur = hasSessions && activeSession ? (activeSession.duration\
+        \ || '0m') : (activeMonthData.time || '0m');\n  \n  const headerSubtitle = isCharging\n    ? '\u26A1 Charging in progress...'\n\
+        \    : (hasSessions ? `${sessionDate} \u2022 ${sessionDur}` : `${activeMonthData.full_label || activeMonthData.label\
+        \ || 'October 2026'} \u2022 No charges recorded yet`);\n\n  // Build hourly rows for the active session\n  let hourlyHtml\
+        \ = '';\n  const hourly = (hasSessions && activeSession && activeSession.hourly) ? activeSession.hourly : [];\n  let\
+        \ maxHourlyKwh = 1;\n  for (const h of hourly) {\n    if (h.total_kwh > maxHourlyKwh) maxHourlyKwh = h.total_kwh;\n\
+        \  }\n  \n  for (const h of hourly) {\n    const barPct = Math.min(100, Math.round((h.total_kwh / maxHourlyKwh) *\
+        \ 100));\n    const solarRatio = h.total_kwh > 0 ? (h.solar_kwh / h.total_kwh) : 0;\n    const solarBarPct = Math.round(barPct\
+        \ * solarRatio);\n    const gridBarPct = barPct - solarBarPct;\n    \n    const rateText = h.solar_kwh >= h.total_kwh\
+        \ \n      ? '<span style=\"color: #00e676; font-weight: 600;\">\u2600\uFE0F Solar Free</span>'\n      : ('\xD7 ' +\
+        \ h.rate.toFixed(4) + ' \u20AC <span style=\"opacity:0.6; font-size:9px;\">(' + h.tramo + ')</span>');\n      \n \
+        \   hourlyHtml += `\n      <div style=\"display: flex; align-items: center; justify-content: space-between; margin-bottom:\
+        \ 8px; font-size: 11px;\">\n        <span style=\"width: 42px; font-weight: 700; color: #cfd8dc;\">${h.hour}</span>\n\
+        \        \n        <div style=\"flex: 1; margin: 0 10px; height: 16px; background: rgba(255,255,255,0.05); border-radius:\
+        \ 4px; overflow: hidden; display: flex;\">\n          <div style=\"width: ${solarBarPct}%; background: linear-gradient(90deg,\
+        \ #00c853, #00e676); height: 100%;\" title=\"Solar\"></div>\n          <div style=\"width: ${gridBarPct}%; background:\
+        \ linear-gradient(90deg, #e6a117, #ffd54f); height: 100%;\" title=\"Grid\"></div>\n        </div>\n        \n    \
+        \    <div style=\"width: 62px; font-weight: 600; text-align: right; color: #ffffff;\">${h.total_kwh.toFixed(2)} kWh</div>\n\
+        \        <div style=\"width: 110px; text-align: right; font-size: 10px; color: #90a4ae;\">${rateText}</div>\n    \
+        \    <div style=\"width: 45px; text-align: right; font-weight: 700; color: #ffd54f;\">${h.cost.toFixed(2)} \u20AC\
+        </div>\n      </div>\n    `;\n  }\n  \n  // Build recent sessions rows for the selected month (Clickable!)\n  let\
+        \ sessionsHtml = '';\n  for (let i = 0; i < Math.min(6, monthSessions.length); i++) {\n    const s = monthSessions[i];\n\
+        \    const isSelected = activeSession && (Number(s.id) === Number(activeSession.id));\n    sessionsHtml += `\n   \
+        \   <div class=\"v2c-session-row\"\n           data-session-id=\"${s.id}\"\n           style=\"display: flex; justify-content:\
+        \ space-between; align-items: center; padding: 8px 12px; margin-bottom: 6px; border-radius: 8px; cursor: pointer !important;\
+        \ pointer-events: auto !important; touch-action: manipulation; transition: all 0.2s ease; background: ${isSelected\
+        \ ? 'rgba(0, 230, 118, 0.14)' : 'rgba(255,255,255,0.03)'}; border: 1px solid ${isSelected ? 'rgba(0, 230, 118, 0.5)'\
+        \ : 'rgba(255, 255, 255, 0.05)'}; ${isSelected ? 'box-shadow: 0 0 10px rgba(0, 230, 118, 0.12);' : ''} font-size:\
+        \ 11px;\">\n        <div style=\"display: flex; align-items: center; gap: 8px; pointer-events: none;\">\n        \
+        \  <span style=\"font-weight: ${isSelected ? '700' : '600'}; color: ${isSelected ? '#ffffff' : '#cfd8dc'};\">${s.date_short}</span>\n\
+        \          <span style=\"background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 4px; font-size: 10px;\
+        \ color: #b0bec5;\">${s.duration}</span>\n        </div>\n        <div style=\"display: flex; align-items: center;\
+        \ gap: 12px; pointer-events: none;\">\n          <span style=\"color: #00e5ff; font-weight: 600;\">\u26A1 ${s.energy_kwh}\
+        \ kWh</span>\n          <span style=\"color: #ffd54f; font-weight: 700;\">${(s.cost_eur || 0).toFixed(2)} \u20AC</span>\n\
+        \          <span style=\"color: #00e676; font-weight: 600; font-size: 10px;\">\u2600\uFE0F +${(s.savings_eur || 0).toFixed(2)}\
+        \ \u20AC</span>\n        </div>\n      </div>\n    `;\n  }\n\n  // Header Status Pill\n  let statusBadgeHtml = '';\n\
+        \  if (fwUpdate) {\n    statusBadgeHtml = '<div style=\"background: rgba(255, 171, 0, 0.12); border: 1px solid rgba(255,\
+        \ 171, 0, 0.4); padding: 3px 8px; border-radius: 14px; font-size: 9.5px; font-weight: 700; color: #ffab00; display:\
+        \ inline-flex; align-items: center; gap: 4px; white-space: nowrap;\"><span>\u26A0\uFE0F Update v' + fwLatest + '</span></div>';\n\
+        \  } else {\n    statusBadgeHtml = '<div style=\"background: rgba(0, 230, 118, 0.1); border: 1px solid rgba(0, 230,\
+        \ 118, 0.25); padding: 3px 8px; border-radius: 14px; font-size: 9.5px; font-weight: 700; color: #00e676; display:\
+        \ inline-flex; align-items: center; gap: 5px; white-space: nowrap;\"><span style=\"display: inline-block; width: 6px;\
+        \ height: 6px; border-radius: 50%; background: #00e676; box-shadow: 0 0 6px #00e676;\"></span><span>v' + fwInstalled\
+        \ + '</span><span style=\"color: #78909c; font-weight: 500;\">\u2022 Synced</span></div>';\n  }\n\n  // Stepper Reset\
+        \ Button\n  let resetBtnHtml = '';\n  if (!isCurrentMonth) {\n    resetBtnHtml = '<button data-action=\"reset-month\"\
+        \ style=\"background: rgba(0, 230, 118, 0.15); border: 1px solid rgba(0, 230, 118, 0.5); color: #00e676; font-size:\
+        \ 9.5px; font-weight: 800; padding: 3px 8px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items:\
+        \ center; gap: 3px; touch-action: manipulation; box-shadow: 0 0 8px rgba(0,230,118,0.2);\"><span style=\"font-size:\
+        \ 11px; line-height: 1;\">\u21BA</span><span>Now</span></button>';\n  } else {\n    resetBtnHtml = '<span style=\"\
+        font-size: 8.5px; color: #78909c; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08);\
+        \ padding: 2px 6px; border-radius: 4px; font-weight: 600;\">Current</span>';\n  }\n\n  return `\n    <div style=\"\
+        position: relative; pointer-events: auto !important;\">\n      <!-- Card Header: Title & Unified Status Pill (Single\
+        \ Line) -->\n      <div style=\"display: flex; justify-content: space-between; align-items: center; margin-bottom:\
+        \ 14px;\">\n        <div style=\"display: flex; align-items: center; gap: 8px;\">\n          <div style=\"width: 32px;\
+        \ height: 32px; border-radius: 10px; background: rgba(0, 230, 118, 0.15); display: flex; align-items: center; justify-content:\
+        \ center; border: 1px solid rgba(0, 230, 118, 0.25);\">\n            <ha-icon icon=\"mdi:cash-multiple\" style=\"\
+        color: #00e676; --mdc-icon-size: 18px;\"></ha-icon>\n          </div>\n          <div>\n            <div style=\"\
+        font-size: 14px; font-weight: 700; color: #ffffff; white-space: nowrap;\">Car Charging & Costs</div>\n           \
+        \ <div style=\"font-size: 10px; color: #78909c; white-space: nowrap;\">${headerSubtitle}</div>\n          </div>\n\
+        \        </div>\n        \n        <div style=\"flex-shrink: 0;\">\n          ${statusBadgeHtml}\n        </div>\n\
+        \      </div>\n\n      <!-- Top 3 KPI Tiles -->\n      <div style=\"display: grid; grid-template-columns: 1fr 1fr\
+        \ 1fr; gap: 10px; margin-bottom: 16px;\">\n        <!-- Energy -->\n        <div style=\"background: rgba(255, 255,\
+        \ 255, 0.04); border-radius: 14px; padding: 12px; border: 1px solid rgba(255, 255, 255, 0.06); text-align: center;\"\
+        >\n          <div style=\"font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #90a4ae; margin-bottom:\
+        \ 4px;\">Energy</div>\n          <div style=\"font-size: 20px; font-weight: 800; color: #ffffff;\">${energyKwh} <span\
+        \ style=\"font-size: 11px; font-weight: 500; color: #b0bec5;\">kWh</span></div>\n          <div style=\"font-size:\
+        \ 9px; color: #00e5ff; margin-top: 2px;\">${hasSessions ? 'Session Total' : 'Month Total'}</div>\n        </div>\n\
+        \n        <!-- Added Range -->\n        <div style=\"background: rgba(255, 255, 255, 0.04); border-radius: 14px; padding:\
+        \ 12px; border: 1px solid rgba(255, 255, 255, 0.06); text-align: center;\">\n          <div style=\"font-size: 10px;\
+        \ text-transform: uppercase; letter-spacing: 0.5px; color: #90a4ae; margin-bottom: 4px;\">Added Range</div>\n    \
+        \      <div style=\"font-size: 20px; font-weight: 800; color: #ffffff;\">${distAdded} <span style=\"font-size: 11px;\
+        \ font-weight: 500; color: #b0bec5;\">km</span></div>\n          <div style=\"font-size: 9px; color: #81c784; margin-top:\
+        \ 2px;\">${hasSessions ? 'Session Est.' : 'Month Est.'}</div>\n        </div>\n\n        <!-- Cost & Savings -->\n\
+        \        <div style=\"background: rgba(255, 255, 255, 0.04); border-radius: 14px; padding: 12px; border: 1px solid\
+        \ rgba(255, 255, 255, 0.06); text-align: center;\">\n          <div style=\"font-size: 10px; text-transform: uppercase;\
+        \ letter-spacing: 0.5px; color: #90a4ae; margin-bottom: 4px;\">Cost</div>\n          <div style=\"font-size: 20px;\
+        \ font-weight: 800; color: #ffd54f;\">${costEur} \u20AC</div>\n          <div style=\"font-size: 9px; color: #00e676;\
+        \ margin-top: 2px; font-weight: 600;\">\u2600\uFE0F Solar Saved ${savingsEur} \u20AC</div>\n        </div>\n     \
+        \ </div>\n\n      <!-- Section: Hour by Hour -->\n      <div style=\"background: rgba(0, 0, 0, 0.25); border-radius:\
+        \ 14px; padding: 12px 14px; margin-bottom: 14px; border: 1px solid rgba(255, 255, 255, 0.04);\">\n        <div style=\"\
+        display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;\">\n          <span style=\"\
+        font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #eceff1;\">Hour by Hour\
+        \ \u2022 ${hasSessions ? sessionDate : (activeMonthData.full_label || activeMonthData.label || 'October 2026')}</span>\n\
+        \          <div style=\"display: flex; align-items: center; gap: 8px; font-size: 9px;\">\n            <span style=\"\
+        display: inline-flex; align-items: center; gap: 3px;\"><span style=\"width: 8px; height: 8px; border-radius: 2px;\
+        \ background: #00e676;\"></span> Solar</span>\n            <span style=\"display: inline-flex; align-items: center;\
+        \ gap: 3px;\"><span style=\"width: 8px; height: 8px; border-radius: 2px; background: #ffd54f;\"></span> Grid</span>\n\
+        \          </div>\n        </div>\n        ${hourlyHtml || `<div style=\"text-align:center; padding: 12px 10px; color:\
+        \ #78909c; font-size: 11px;\">${hasSessions ? 'No hourly breakdown available for this session' : 'No charging activity\
+        \ in ' + (activeMonthData.full_label || activeMonthData.label || 'this month')}</div>`}\n      </div>\n\n      <!--\
+        \ Section: Sessions of Selected Month (Click any row to view) -->\n      <div style=\"background: rgba(0, 0, 0, 0.25);\
+        \ border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; border: 1px solid rgba(255, 255, 255, 0.04);\">\n\
+        \        <div style=\"display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;\">\n\
+        \          <span style=\"font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color:\
+        \ #eceff1;\">${activeMonthData.label || 'Monthly'} Sessions (${monthSessions.length})</span>\n          <span style=\"\
+        font-size: 9.5px; color: #78909c;\">${hasSessions ? 'Tap session to view details' : 'No records'}</span>\n       \
+        \ </div>\n        ${sessionsHtml || `<div style=\"text-align:center; padding: 12px 10px; color: #78909c; font-size:\
+        \ 11px;\">No charging sessions recorded in ${activeMonthData.full_label || activeMonthData.label || 'this month'}</div>`}\n\
+        \      </div>\n\n      <!-- Section: Monthly Summary (Prominent Stepper & Reset Button) -->\n      <div style=\"background:\
+        \ rgba(0, 0, 0, 0.25); border-radius: 14px; padding: 12px; border: 1px solid rgba(255, 255, 255, 0.08);\">\n     \
+        \   <div style=\"display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;\">\n   \
+        \       \n          <!-- Left: Prominent Month Stepper + Now Button -->\n          <div style=\"display: flex; align-items:\
+        \ center; gap: 8px;\">\n            <div style=\"display: inline-flex; align-items: center; background: rgba(255,\
+        \ 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.16); border-radius: 8px; padding: 2px;\">\n           \
+        \   <button data-action=\"step-month\" data-dir=\"-1\"\n                      style=\"background: ${canGoBack ? 'rgba(255,255,255,0.12)'\
+        \ : 'transparent'}; border: none; color: ${canGoBack ? '#ffffff' : 'rgba(255,255,255,0.2)'}; font-size: 14px; font-weight:\
+        \ 900; cursor: pointer; padding: 3px 8px; border-radius: 5px; touch-action: manipulation;\"\n                    \
+        \  ${canGoBack ? '' : 'disabled'}>\u2039</button>\n              \n              <span style=\"font-size: 11px; font-weight:\
+        \ 800; color: #ffffff; padding: 0 6px; letter-spacing: 0.3px; white-space: nowrap;\">\n                ${activeMonthData.label\
+        \ || activeMonthKey}\n              </span>\n              \n              <button data-action=\"step-month\" data-dir=\"\
+        1\"\n                      style=\"background: ${canGoForward ? 'rgba(255,255,255,0.12)' : 'transparent'}; border:\
+        \ none; color: ${canGoForward ? '#ffffff' : 'rgba(255,255,255,0.2)'}; font-size: 14px; font-weight: 900; cursor: pointer;\
+        \ padding: 3px 8px; border-radius: 5px; touch-action: manipulation;\"\n                      ${canGoForward ? '' :\
+        \ 'disabled'}>\u203A</button>\n            </div>\n\n            ${resetBtnHtml}\n          </div>\n\n          <!--\
+        \ Right: Avg Rate Badge -->\n          <span style=\"font-size: 9.5px; color: #00e676; font-weight: 800; background:\
+        \ rgba(0, 230, 118, 0.1); border: 1px solid rgba(0, 230, 118, 0.25); padding: 2px 8px; border-radius: 6px; white-space:\
+        \ nowrap;\">\n            Avg: ${(activeMonthData.avg_rate_kwh || 0).toFixed(3)} \u20AC/kWh\n          </span>\n \
+        \       </div>\n\n        <!-- 4 Grid Tiles -->\n        <div style=\"display: grid; grid-template-columns: repeat(4,\
+        \ 1fr); gap: 6px;\">\n          <!-- Duration -->\n          <div style=\"background: rgba(255, 255, 255, 0.025);\
+        \ border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 7px 4px; text-align: center;\">\n    \
+        \        <div style=\"font-size: 8px; font-weight: 700; color: #78909c; text-transform: uppercase; letter-spacing:\
+        \ 0.4px;\">Duration</div>\n            <div style=\"font-size: 12.5px; font-weight: 800; color: #ffffff; margin-top:\
+        \ 3px; line-height: 1.1;\">${activeMonthData.time || '0m'}</div>\n          </div>\n          <!-- Total Energy -->\n\
+        \          <div style=\"background: rgba(255, 255, 255, 0.025); border: 1px solid rgba(0, 229, 255, 0.15); border-radius:\
+        \ 8px; padding: 7px 4px; text-align: center;\">\n            <div style=\"font-size: 8px; font-weight: 700; color:\
+        \ #78909c; text-transform: uppercase; letter-spacing: 0.4px;\">Total Energy</div>\n            <div style=\"font-size:\
+        \ 12.5px; font-weight: 800; color: #00e5ff; margin-top: 3px; line-height: 1.1;\">${(activeMonthData.energy_kwh ||\
+        \ 0).toFixed(1)} <span style=\"font-size: 8.5px; color: #78909c; font-weight: 600;\">kWh</span></div>\n          </div>\n\
+        \          <!-- Net Cost -->\n          <div style=\"background: rgba(255, 255, 255, 0.025); border: 1px solid rgba(255,\
+        \ 213, 79, 0.15); border-radius: 8px; padding: 7px 4px; text-align: center;\">\n            <div style=\"font-size:\
+        \ 8px; font-weight: 700; color: #78909c; text-transform: uppercase; letter-spacing: 0.4px;\">Net Cost</div>\n    \
+        \        <div style=\"font-size: 12.5px; font-weight: 800; color: #ffd54f; margin-top: 3px; line-height: 1.1;\">${(activeMonthData.cost_eur\
+        \ || 0).toFixed(2)} \u20AC</div>\n          </div>\n          <!-- Solar Saved -->\n          <div style=\"background:\
+        \ rgba(255, 255, 255, 0.025); border: 1px solid rgba(0, 230, 118, 0.15); border-radius: 8px; padding: 7px 4px; text-align:\
+        \ center;\">\n            <div style=\"font-size: 8px; font-weight: 700; color: #78909c; text-transform: uppercase;\
+        \ letter-spacing: 0.4px;\">Solar Saved</div>\n            <div style=\"font-size: 12.5px; font-weight: 800; color:\
+        \ #00e676; margin-top: 3px; line-height: 1.1;\">\u2600\uFE0F ${(activeMonthData.savings_eur || 0).toFixed(2)} \u20AC\
+        </div>\n          </div>\n        </div>\n      </div>\n    </div>\n  `;\n]]]"
+    extra_styles: |2
+
+      ha-card.disabled {
+        pointer-events: auto !important;
+        cursor: default !important;
+      }
+      #card {
+        pointer-events: auto !important;
+      }
+      #container {
+        pointer-events: auto !important;
+      }
+      .v2c-session-row {
+        pointer-events: auto !important;
+        cursor: pointer !important;
+        touch-action: manipulation !important;
+        -webkit-tap-highlight-color: rgba(0, 230, 118, 0.2) !important;
+        user-select: none !important;
+        -webkit-user-select: none !important;
+      }
+      .v2c-session-row:hover {
+        background: rgba(255, 255, 255, 0.08) !important;
+      }
+      .v2c-session-row:active {
+        transform: scale(0.98) !important;
+      }
+  - type: custom:button-card
+    name: Tesla Fuel Savings
+    show_name: false
+    show_state: false
+    show_icon: false
+    tap_action:
+      action: none
+    triggers_update:
+    - sensor.fuel_price_gasolina_95
+    - sensor.tesla_ble_garage_odometer
+    - sensor.tesla_monthly_mileage
+    - sensor.v2c_charging_stats
+    - sensor.tesla_ble_garage_range
+    - sensor.tesla_ble_garage_charge_level
+    - sensor.tesla_ble_garage_charge_energy_added
+    - sensor.tesla_ble_garage_charge_distance_added
+    styles:
+      card:
+      - background: 'linear-gradient(160deg, #10141c 0%, #161c26 100%)'
+      - border-radius: 20px
+      - border: 1px solid rgba(0, 230, 118, 0.2)
+      - box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6)
+      - padding: 16px
+      - color: '#ffffff'
+      - pointer-events: auto !important
+      - cursor: default
+      grid:
+      - grid-template-areas: '''savings_hub'''
+      - grid-template-columns: 1fr
+      - padding: 0px
+      - pointer-events: auto !important
+      custom_fields:
+        savings_hub:
+        - width: 100%
+        - white-space: normal
+        - overflow: visible
+        - pointer-events: auto !important
+    extra_styles: |2
+
+      ha-card.disabled {
+        pointer-events: auto !important;
+        cursor: default !important;
+      }
+      #card {
+        pointer-events: auto !important;
+      }
+      #container {
+        pointer-events: auto !important;
+      }
+      button:active {
+        transform: scale(0.96);
+      }
+    custom_fields:
+      savings_hub: "[[[\n  const cardElement = this;\n  const odoEnt = states['sensor.tesla_ble_garage_odometer'];\n  const\
+        \ fuelEnt = states['sensor.fuel_price_gasolina_95'];\n  const monthDistEnt = states['sensor.tesla_monthly_mileage'];\n\
+        \  const rangeEnt = states['sensor.tesla_ble_garage_range'];\n  const socEnt = states['sensor.tesla_ble_garage_charge_level'];\n\
+        \  const energyAddedEnt = states['sensor.tesla_ble_garage_charge_energy_added'];\n  const distAddedEnt = states['sensor.tesla_ble_garage_charge_distance_added'];\n\
+        \n  const odoKm = parseFloat(odoEnt?.state) || 14997.2;\n  const gasPrice = parseFloat(fuelEnt?.state) || 1.805;\n\
+        \  const monthDistKm = parseFloat(monthDistEnt?.state) || 124.5;\n  const rangeKm = parseFloat(rangeEnt?.state) ||\
+        \ 338.8;\n  const soc = parseFloat(socEnt?.state) || 76;\n  const lastEnergy = parseFloat(energyAddedEnt?.state) ||\
+        \ 2.26;\n  const lastDist = parseFloat(distAddedEnt?.state) || 16.9;\n\n  // Format numbers nicely\n  const fmtEur\
+        \ = (n) => (n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });\n  const fmtKm\
+        \ = (n) => Math.round(n || 0).toLocaleString('en-US');\n  const fmtL = (n) => Math.round(n || 0).toLocaleString('en-US');\n\
+        \n  // Interactive user state\n  if (!window._mrwhite_ice_l) window._mrwhite_ice_l = 6.0;\n  if (!window._mrwhite_tab)\
+        \ window._mrwhite_tab = 'lifetime';\n\n  const iceL = window._mrwhite_ice_l;\n  const activeTab = window._mrwhite_tab;\n\
+        \n  // Real vehicle parameters\n  // Tesla Highland efficiency: ~14.5 kWh/100 km (~6.9 km/kWh)\n  const teslaKwh100km\
+        \ = 14.5;\n  // User's real home electricity rate (solar + off-peak weighted): 0.0339 \u20AC/kWh\n  const teslaHomeEurKwh\
+        \ = 0.0339;\n\n  // Per 100 km cost comparison\n  const iceCost100km = iceL * gasPrice;\n  const teslaCost100km =\
+        \ (teslaKwh100km * teslaHomeEurKwh);\n  const delta100km = Math.max(0, iceCost100km - teslaCost100km);\n  const pctSaved\
+        \ = Math.min(99.5, ((delta100km / iceCost100km) * 100));\n\n  // Horizon calculations\n  let horizonMetricTitle =\
+        \ 'Distance Driven';\n  let horizonLabel = '';\n  let horizonDistance = 0;\n  let horizonPetrolDisplaced = 0;\n  let\
+        \ horizonNetSavedEur = 0;\n  let horizonTeslaCost = 0;\n  let horizonGasCost = 0;\n  let horizonCo2Kg = 0;\n  let\
+        \ horizonDisplacedSubtitle = '';\n\n  if (activeTab === 'lifetime') {\n    horizonMetricTitle = 'Total Mileage';\n\
+        \    horizonLabel = 'Total Lifetime Odometer';\n    horizonDistance = odoKm;\n    horizonPetrolDisplaced = (odoKm\
+        \ / 100) * iceL;\n    horizonGasCost = horizonPetrolDisplaced * gasPrice;\n    horizonTeslaCost = (odoKm / 100) *\
+        \ teslaKwh100km * teslaHomeEurKwh;\n    horizonNetSavedEur = horizonGasCost - horizonTeslaCost;\n    horizonCo2Kg\
+        \ = horizonPetrolDisplaced * 2.31;\n    horizonDisplacedSubtitle = `Across ${fmtKm(horizonDistance)} km driven`;\n\
+        \  } else if (activeTab === 'month') {\n    horizonMetricTitle = 'Distance Driven';\n    horizonLabel = 'Driven in\
+        \ October 2026';\n    horizonDistance = monthDistKm;\n    horizonPetrolDisplaced = (monthDistKm / 100) * iceL;\n \
+        \   horizonGasCost = horizonPetrolDisplaced * gasPrice;\n    horizonTeslaCost = (monthDistKm / 100) * teslaKwh100km\
+        \ * teslaHomeEurKwh;\n    horizonNetSavedEur = Math.max(0, horizonGasCost - horizonTeslaCost);\n    horizonCo2Kg =\
+        \ horizonPetrolDisplaced * 2.31;\n    horizonDisplacedSubtitle = `Across ${fmtKm(horizonDistance)} km driven this\
+        \ month`;\n  } else if (activeTab === 'pack' || activeTab === 'range') {\n    horizonMetricTitle = 'Remaining Range';\n\
+        \    horizonLabel = 'Current Battery Estimate (' + Math.round(soc) + '% SoC)';\n    horizonDistance = rangeKm;\n \
+        \   horizonPetrolDisplaced = (rangeKm / 100) * iceL;\n    horizonGasCost = horizonPetrolDisplaced * gasPrice;\n  \
+        \  horizonTeslaCost = (rangeKm / 100) * teslaKwh100km * teslaHomeEurKwh;\n    horizonNetSavedEur = horizonGasCost\
+        \ - horizonTeslaCost;\n    horizonCo2Kg = horizonPetrolDisplaced * 2.31;\n    horizonDisplacedSubtitle = `For ${fmtKm(horizonDistance)}\
+        \ km stored range`;\n  } else if (activeTab === 'session') {\n    horizonMetricTitle = 'Range Added';\n    horizonLabel\
+        \ = 'Most Recent Charge (+' + lastEnergy.toFixed(1) + ' kWh)';\n    horizonDistance = lastDist;\n    horizonPetrolDisplaced\
+        \ = (lastDist / 100) * iceL;\n    horizonGasCost = horizonPetrolDisplaced * gasPrice;\n    horizonTeslaCost = lastEnergy\
+        \ * teslaHomeEurKwh;\n    horizonNetSavedEur = Math.max(0, horizonGasCost - horizonTeslaCost);\n    horizonCo2Kg =\
+        \ horizonPetrolDisplaced * 2.31;\n    horizonDisplacedSubtitle = `For +${lastDist.toFixed(1)} km added range`;\n \
+        \ }\n\n  // Interactive Click Handlers (AresLab touch & click binding)\n  window._setMrWhiteIce = function(liters,\
+        \ el) {\n    window._mrwhite_ice_l = parseFloat(liters);\n    if (cardElement && typeof cardElement.requestUpdate\
+        \ === 'function') {\n      cardElement.requestUpdate('_config');\n    }\n  };\n\n  window._setMrWhiteTab = function(tab,\
+        \ el) {\n    window._mrwhite_tab = tab;\n    if (cardElement && typeof cardElement.requestUpdate === 'function') {\n\
+        \      cardElement.requestUpdate('_config');\n    }\n  };\n\n  if (cardElement && !cardElement._savingsListenersAttached)\
+        \ {\n    cardElement._savingsListenersAttached = true;\n    let touchStartX = 0;\n    let touchStartY = 0;\n    let\
+        \ isScrolling = false;\n\n    cardElement.addEventListener('touchstart', (e) => {\n      if (e.touches && e.touches[0])\
+        \ {\n        touchStartX = e.touches[0].clientX;\n        touchStartY = e.touches[0].clientY;\n        isScrolling\
+        \ = false;\n      }\n    }, { passive: true, capture: true });\n\n    cardElement.addEventListener('touchmove', (e)\
+        \ => {\n      if (e.touches && e.touches[0]) {\n        const dx = Math.abs(e.touches[0].clientX - touchStartX);\n\
+        \        const dy = Math.abs(e.touches[0].clientY - touchStartY);\n        if (dx > 8 || dy > 8) isScrolling = true;\n\
+        \      }\n    }, { passive: true, capture: true });\n\n    const handleAction = (e) => {\n      if (isScrolling) return;\n\
+        \      const path = e.composedPath ? e.composedPath() : [];\n      for (let i = 0; i < path.length; i++) {\n     \
+        \   const el = path[i];\n        if (el && el.getAttribute) {\n          if (el.getAttribute('data-action') === 'set-ice')\
+        \ {\n            const val = el.getAttribute('data-val');\n            window._setMrWhiteIce(val, cardElement);\n\
+        \            if (e.preventDefault) e.preventDefault();\n            e.stopPropagation();\n            break;\n   \
+        \       }\n          if (el.getAttribute('data-action') === 'set-tab') {\n            const val = el.getAttribute('data-val');\n\
+        \            window._setMrWhiteTab(val, cardElement);\n            if (e.preventDefault) e.preventDefault();\n   \
+        \         e.stopPropagation();\n            break;\n          }\n        }\n      }\n    };\n\n    cardElement.addEventListener('touchend',\
+        \ handleAction, { passive: false, capture: true });\n    cardElement.addEventListener('click', handleAction, true);\n\
+        \  }\n\n  return `\n    <div style=\"position: relative; pointer-events: auto !important;\">\n      <!-- Header: Title\
+        \ & Live MITECO Status Pill -->\n      <div style=\"display: flex; justify-content: space-between; align-items: center;\
+        \ margin-bottom: 14px;\">\n        <div style=\"display: flex; align-items: center; gap: 8px;\">\n          <div style=\"\
+        width: 32px; height: 32px; border-radius: 10px; background: rgba(0, 230, 118, 0.15); display: flex; align-items: center;\
+        \ justify-content: center; border: 1px solid rgba(0, 230, 118, 0.25);\">\n            <ha-icon icon=\"mdi:gas-station-off\"\
+        \ style=\"color: #00e676; --mdc-icon-size: 18px;\"></ha-icon>\n          </div>\n          <div>\n            <div\
+        \ style=\"font-size: 13.5px; font-weight: 700; color: #ffffff; white-space: nowrap;\">Mr White \u2022 Fuel Savings</div>\n\
+        \            <div style=\"font-size: 9.5px; color: #78909c; white-space: nowrap;\">Real-Time MITECO \u2022 100% Home\
+        \ Solar</div>\n          </div>\n        </div>\n        \n        <div style=\"flex-shrink: 0;\">\n          <div\
+        \ style=\"background: rgba(0, 230, 118, 0.1); border: 1px solid rgba(0, 230, 118, 0.25); padding: 3px 7px; border-radius:\
+        \ 14px; font-size: 9px; font-weight: 700; color: #00e676; display: inline-flex; align-items: center; gap: 4px; white-space:\
+        \ nowrap;\">\n            <span style=\"display: inline-block; width: 5px; height: 5px; border-radius: 50%; background:\
+        \ #00e676; box-shadow: 0 0 5px #00e676;\"></span>\n            <span>${gasPrice.toFixed(3)} \u20AC/L \u2022 MITECO</span>\n\
+        \          </div>\n        </div>\n      </div>\n\n      <!-- Cost per 100 km Comparison Banner -->\n      <div style=\"\
+        background: rgba(0, 0, 0, 0.25); border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; border: 1px solid rgba(255,\
+        \ 255, 255, 0.05);\">\n        <div style=\"display: flex; justify-content: space-between; align-items: center; margin-bottom:\
+        \ 8px;\">\n          <span style=\"font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing:\
+        \ 0.5px; color: #eceff1;\">Cost per 100 km Comparison</span>\n          <span style=\"font-size: 9.5px; font-weight:\
+        \ 800; color: #00e676; background: rgba(0, 230, 118, 0.12); padding: 2px 6px; border-radius: 6px; border: 1px solid\
+        \ rgba(0, 230, 118, 0.3);\">\n            \u26A1 ${pctSaved.toFixed(1)}% CHEAPER\n          </span>\n        </div>\n\
+        \n        <!-- Comparative Visual Bars -->\n        <div style=\"display: flex; flex-direction: column; gap: 7px;\
+        \ margin: 10px 0;\">\n          <!-- Mr White Tesla -->\n          <div style=\"display: flex; align-items: center;\
+        \ justify-content: space-between; font-size: 11px;\">\n            <div style=\"width: 105px; font-weight: 700; color:\
+        \ #ffffff; display: flex; align-items: center; gap: 5px; white-space: nowrap;\">\n              <span style=\"display:\
+        \ inline-block; width: 7px; height: 7px; border-radius: 50%; background: #00e676; box-shadow: 0 0 5px #00e676;\"></span>\n\
+        \              <span>Mr White</span>\n            </div>\n            <div style=\"flex: 1; margin: 0 8px; height:\
+        \ 14px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;\">\n              <div style=\"\
+        width: ${Math.max(4, Math.round((teslaCost100km / iceCost100km) * 100))}%; height: 100%; background: linear-gradient(90deg,\
+        \ #00c853, #00e676); border-radius: 4px; box-shadow: 0 0 8px rgba(0, 230, 118, 0.4);\"></div>\n            </div>\n\
+        \            <div style=\"width: 50px; text-align: right; font-weight: 800; color: #00e676; font-size: 11px;\">${teslaCost100km.toFixed(2)}\
+        \ \u20AC</div>\n          </div>\n\n          <!-- Gasoline 95 Baseline -->\n          <div style=\"display: flex;\
+        \ align-items: center; justify-content: space-between; font-size: 11px;\">\n            <div style=\"width: 105px;\
+        \ font-weight: 600; color: #cfd8dc; display: flex; align-items: center; gap: 5px; white-space: nowrap;\">\n      \
+        \        <span style=\"display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #ff5252;\"\
+        ></span>\n              <span>Gas 95 (${iceL.toFixed(1)}L)</span>\n            </div>\n            <div style=\"flex:\
+        \ 1; margin: 0 8px; height: 14px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;\">\n \
+        \             <div style=\"width: 100%; height: 100%; background: linear-gradient(90deg, #d32f2f, #ff5252); border-radius:\
+        \ 4px;\"></div>\n            </div>\n            <div style=\"width: 50px; text-align: right; font-weight: 800; color:\
+        \ #ff5252; font-size: 11px;\">${iceCost100km.toFixed(2)} \u20AC</div>\n          </div>\n        </div>\n\n      \
+        \  <!-- Cost Delta Ribbon -->\n        <div style=\"margin-top: 10px; padding: 6px 10px; background: rgba(0, 230,\
+        \ 118, 0.08); border: 1px solid rgba(0, 230, 118, 0.2); border-radius: 8px; display: flex; justify-content: space-between;\
+        \ align-items: center; font-size: 10px;\">\n          <span style=\"color: #b0bec5;\">Net Savings Every 100 km:</span>\n\
+        \          <span style=\"font-weight: 800; color: #00e676; font-size: 11px;\">+${delta100km.toFixed(2)} \u20AC saved\
+        \ / 100 km</span>\n        </div>\n      </div>\n\n      <!-- Controls: ICE Class Selector & Horizon Tabs -->\n  \
+        \    <div style=\"background: rgba(0, 0, 0, 0.25); border-radius: 14px; padding: 12px; margin-bottom: 14px; border:\
+        \ 1px solid rgba(255, 255, 255, 0.05);\">\n        <!-- Top: Vehicle Comparison Class -->\n        <div style=\"display:\
+        \ flex; justify-content: space-between; align-items: center; margin-bottom: 10px;\">\n          <span style=\"font-size:\
+        \ 9.5px; font-weight: 700; color: #90a4ae; text-transform: uppercase; letter-spacing: 0.5px;\">ICE Baseline:</span>\n\
+        \          <div style=\"display: flex; gap: 4px;\">\n            <button data-action=\"set-ice\" data-val=\"4.5\"\
+        \ style=\"background: ${iceL === 4.5 ? 'rgba(0, 230, 118, 0.2)' : 'rgba(255, 255, 255, 0.04)'}; border: 1px solid\
+        \ ${iceL === 4.5 ? '#00e676' : 'rgba(255, 255, 255, 0.1)'}; color: ${iceL === 4.5 ? '#00e676' : '#b0bec5'}; font-size:\
+        \ 9px; font-weight: 700; padding: 3px 7px; border-radius: 6px; cursor: pointer; touch-action: manipulation;\">4.5L\
+        \ Compact</button>\n            <button data-action=\"set-ice\" data-val=\"6.0\" style=\"background: ${iceL === 6.0\
+        \ ? 'rgba(0, 230, 118, 0.2)' : 'rgba(255, 255, 255, 0.04)'}; border: 1px solid ${iceL === 6.0 ? '#00e676' : 'rgba(255,\
+        \ 255, 255, 0.1)'}; color: ${iceL === 6.0 ? '#00e676' : '#b0bec5'}; font-size: 9px; font-weight: 700; padding: 3px\
+        \ 7px; border-radius: 6px; cursor: pointer; touch-action: manipulation;\">6.0L Saloon \u2605</button>\n          \
+        \  <button data-action=\"set-ice\" data-val=\"7.5\" style=\"background: ${iceL === 7.5 ? 'rgba(0, 230, 118, 0.2)'\
+        \ : 'rgba(255, 255, 255, 0.04)'}; border: 1px solid ${iceL === 7.5 ? '#00e676' : 'rgba(255, 255, 255, 0.1)'}; color:\
+        \ ${iceL === 7.5 ? '#00e676' : '#b0bec5'}; font-size: 9px; font-weight: 700; padding: 3px 7px; border-radius: 6px;\
+        \ cursor: pointer; touch-action: manipulation;\">7.5L SUV</button>\n          </div>\n        </div>\n\n        <!--\
+        \ Horizon Selector Tabs -->\n        <div style=\"display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px;\
+        \ background: rgba(255, 255, 255, 0.03); padding: 3px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05);\"\
+        >\n          <button data-action=\"set-tab\" data-val=\"lifetime\" style=\"background: ${activeTab === 'lifetime'\
+        \ ? 'rgba(0, 230, 118, 0.22)' : 'transparent'}; border: 1px solid ${activeTab === 'lifetime' ? 'rgba(0, 230, 118,\
+        \ 0.5)' : 'transparent'}; color: ${activeTab === 'lifetime' ? '#ffffff' : '#90a4ae'}; font-size: 8.5px; font-weight:\
+        \ ${activeTab === 'lifetime' ? '800' : '600'}; padding: 5px 2px; border-radius: 6px; cursor: pointer; touch-action:\
+        \ manipulation; white-space: nowrap; text-align: center;\">Lifetime</button>\n          <button data-action=\"set-tab\"\
+        \ data-val=\"month\" style=\"background: ${activeTab === 'month' ? 'rgba(0, 230, 118, 0.22)' : 'transparent'}; border:\
+        \ 1px solid ${activeTab === 'month' ? 'rgba(0, 230, 118, 0.5)' : 'transparent'}; color: ${activeTab === 'month' ?\
+        \ '#ffffff' : '#90a4ae'}; font-size: 8.5px; font-weight: ${activeTab === 'month' ? '800' : '600'}; padding: 5px 2px;\
+        \ border-radius: 6px; cursor: pointer; touch-action: manipulation; white-space: nowrap; text-align: center;\">This\
+        \ Month</button>\n          <button data-action=\"set-tab\" data-val=\"range\" style=\"background: ${(activeTab ===\
+        \ 'pack' || activeTab === 'range') ? 'rgba(0, 230, 118, 0.22)' : 'transparent'}; border: 1px solid ${(activeTab ===\
+        \ 'pack' || activeTab === 'range') ? 'rgba(0, 230, 118, 0.5)' : 'transparent'}; color: ${(activeTab === 'pack' ||\
+        \ activeTab === 'range') ? '#ffffff' : '#90a4ae'}; font-size: 8.5px; font-weight: ${(activeTab === 'pack' || activeTab\
+        \ === 'range') ? '800' : '600'}; padding: 5px 2px; border-radius: 6px; cursor: pointer; touch-action: manipulation;\
+        \ white-space: nowrap; text-align: center;\">Current Range</button>\n          <button data-action=\"set-tab\" data-val=\"\
+        session\" style=\"background: ${activeTab === 'session' ? 'rgba(0, 230, 118, 0.22)' : 'transparent'}; border: 1px\
+        \ solid ${activeTab === 'session' ? 'rgba(0, 230, 118, 0.5)' : 'transparent'}; color: ${activeTab === 'session' ?\
+        \ '#ffffff' : '#90a4ae'}; font-size: 8.5px; font-weight: ${activeTab === 'session' ? '800' : '600'}; padding: 5px\
+        \ 2px; border-radius: 6px; cursor: pointer; touch-action: manipulation; white-space: nowrap; text-align: center;\"\
+        >Last Charge</button>\n        </div>\n      </div>\n\n      <!-- Active Horizon KPI Summary (4 Prominent Glass Tiles)\
+        \ -->\n      <div style=\"display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 6px;\">\n\
+        \        <!-- Total Euro Saved -->\n        <div style=\"background: rgba(0, 230, 118, 0.08); border-radius: 14px;\
+        \ padding: 12px; border: 1px solid rgba(0, 230, 118, 0.25); text-align: center;\">\n          <div style=\"font-size:\
+        \ 9.5px; text-transform: uppercase; letter-spacing: 0.5px; color: #00e676; font-weight: 700; margin-bottom: 4px;\"\
+        >Net Money Saved</div>\n          <div style=\"font-size: 21px; font-weight: 900; color: #ffffff;\">+${fmtEur(horizonNetSavedEur)}\
+        \ <span style=\"font-size: 12px; font-weight: 600; color: #00e676;\">\u20AC</span></div>\n          <div style=\"\
+        font-size: 8.5px; color: #b0bec5; margin-top: 3px;\">Gas: ${fmtEur(horizonGasCost)} \u20AC vs Tesla: ${fmtEur(horizonTeslaCost)}\
+        \ \u20AC</div>\n        </div>\n\n        <!-- Petrol Displaced -->\n        <div style=\"background: rgba(255, 255,\
+        \ 255, 0.04); border-radius: 14px; padding: 12px; border: 1px solid rgba(255, 255, 255, 0.08); text-align: center;\"\
+        >\n          <div style=\"font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.5px; color: #00e5ff; font-weight:\
+        \ 700; margin-bottom: 4px;\">Petrol Displaced</div>\n          <div style=\"font-size: 21px; font-weight: 900; color:\
+        \ #ffffff;\">${fmtL(horizonPetrolDisplaced)} <span style=\"font-size: 12px; font-weight: 600; color: #00e5ff;\">Liters</span></div>\n\
+        \          <div style=\"font-size: 8.5px; color: #b0bec5; margin-top: 3px;\">${horizonDisplacedSubtitle}</div>\n \
+        \       </div>\n\n        <!-- Dynamic Mileage/Range Tile -->\n        <div style=\"background: rgba(255, 255, 255,\
+        \ 0.04); border-radius: 14px; padding: 12px; border: 1px solid rgba(255, 255, 255, 0.08); text-align: center;\">\n\
+        \          <div style=\"font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.5px; color: #ffd54f; font-weight:\
+        \ 700; margin-bottom: 4px;\">${horizonMetricTitle}</div>\n          <div style=\"font-size: 19px; font-weight: 800;\
+        \ color: #ffffff;\">${fmtKm(horizonDistance)} <span style=\"font-size: 12px; font-weight: 600; color: #ffd54f;\">km</span></div>\n\
+        \          <div style=\"font-size: 8.5px; color: #78909c; margin-top: 3px;\">${horizonLabel}</div>\n        </div>\n\
+        \n        <!-- CO2 Avoided -->\n        <div style=\"background: rgba(255, 255, 255, 0.04); border-radius: 14px; padding:\
+        \ 12px; border: 1px solid rgba(255, 255, 255, 0.08); text-align: center;\">\n          <div style=\"font-size: 9.5px;\
+        \ text-transform: uppercase; letter-spacing: 0.5px; color: #81c784; font-weight: 700; margin-bottom: 4px;\">Emissions\
+        \ Avoided</div>\n          <div style=\"font-size: 19px; font-weight: 800; color: #81c784;\">${(horizonCo2Kg / 1000).toFixed(2)}\
+        \ <span style=\"font-size: 12px; font-weight: 600; color: #a5d6a7;\">Tonnes</span></div>\n          <div style=\"\
+        font-size: 8.5px; color: #78909c; margin-top: 3px;\">Avoided CO\u2082 (2.31 kg/L)</div>\n        </div>\n      </div>\n\
+        \    </div>\n  `;\n]]]"
