@@ -50,10 +50,10 @@ An ultra-modern, interactive Tesla and EV Home Charging Mission Control dashboar
   * 4 horizons: **Lifetime Mileage** (15,187 km), **This Month**, **Current Range**, and **Last Charge**.
   * Net money saved, petrol displaced (liters), and avoided CO₂ emissions (tonnes).
 * **Card 4: Tesla Economics — Capital Recovery & Early Payoff Dossier**
-  * Net acquisition breakdown: Gross price (€36,050) - Grants (Plan MOVES III, IRPF 15%, CAE) = Adjusted Net Cost (€27,900).
+  * Net acquisition breakdown: Gross price (€40,000) - Grants (Plan MOVES III, IRPF 15%, CAE) = Adjusted Net Cost.
   * Cumulative gas offset progression bar (`% Done` towards 100% Free Car).
-  * Monthly loan vs gas offset cashflow comparison (e.g. gas savings covering ~38.6% of monthly car note).
-  * **Early Payoff Target Engine**: Real-time lump-sum settlement balance vs interest kept in pocket (saving 91 months of bank interest).
+  * Monthly loan vs gas offset cashflow comparison.
+  * **Early Payoff Target Engine**: Real-time lump-sum settlement balance vs interest kept in pocket (canceling future bank financing interest).
 
 ---
 
