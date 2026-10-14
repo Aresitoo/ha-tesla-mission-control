@@ -1743,7 +1743,7 @@ cards:
             = 6.0;\n  if (!window._mrwhite_roi_tax_adj) window._mrwhite_roi_tax_adj
             = false;\n\n  const iceL = window._mrwhite_roi_ice;\n  const isTaxAdj
             = window._mrwhite_roi_tax_adj;\n\n  // Financial Baseline Constants (from
-            purchase & BBVA contract)\n  const grossPrice = 36050.0;\n  const irpfSub
+            purchase & loan contract)\n  const grossPrice = 40000.0; // [DEMO] Replace with your vehicle purchase price\n  const irpfSub
             = 3000.0;\n  const caeSub = 650.0;\n  // If tax-adjusted, reserve ~28%
             for IRPF on MOVES grant (~1,260 EUR)\n  const movesNet = isTaxAdj ? 3240.0
             : 4500.0;\n  const totalSubsidies = irpfSub + caeSub + movesNet;\n  const
@@ -1755,7 +1755,7 @@ cards:
             Capital Amortization\n  const lifetimeSavings = odoKm * deltaKm;\n  const
             adjustedNetCost = Math.max(0, netAcquisitionCost - lifetimeSavings);\n\
             \  const pctAmortized = Math.min(100, (lifetimeSavings / netAcquisitionCost)
-            * 100);\n\n  // Dynamic Monthly Cashflow\n  const bbvaMonthlyCuota = 273.76;\n\
+            * 100);\n\n  // Dynamic Monthly Cashflow\n  const monthlyLoanPayment = 273.76;\n\
             \  const thisMonthSavings = monthDistKm * deltaKm;\n  \n  // Real monthly
             average pace based on actual vehicle ownership (since 2025-07-18)\n  const
             loanStartDate = new Date('2025-07-18');\n  const now = new Date();\n \
@@ -1763,13 +1763,13 @@ cards:
             * 60 * 60 * 24)));\n  const monthsOwned = daysOwned / 30.4375;\n  const
             avgMonthlyKm = odoKm / monthsOwned;\n  const avgMonthlySavings = avgMonthlyKm
             * deltaKm;\n\n  const avgOffsetPct = Math.min(100, (avgMonthlySavings
-            / bbvaMonthlyCuota) * 100);\n  const effectiveMonthlyOutPkt = Math.max(0,
-            bbvaMonthlyCuota - avgMonthlySavings);\n\n  // BBVA Loan Schedule & Early
+            / monthlyLoanPayment) * 100);\n  const effectiveMonthlyOutPkt = Math.max(0,
+            monthlyLoanPayment - avgMonthlySavings);\n\n  // Auto Loan Schedule & Early
             Payoff (Jan 2028 target)\n  const totalLoanInterest120m = 6801.36;\n \
             \ const cuota1Date = new Date('2025-08-18');\n  const currentCuotaNum
             = Math.max(1, Math.min(120, Math.floor((now - cuota1Date) / (1000 * 60
             * 60 * 24 * 30.4375)) + 1));\n  \n  // Target Payoff: Cuota 29 (Dec 2027
-            / Jan 2028)\n  const targetPayoffCapital = 20847.22;\n  const interestPaidByTarget
+            / Jan 2028)\n  const targetPayoffCapital = 18500.00; // [DEMO] Principal balance at payoff target month\n  const interestPaidByTarget
             = 2736.26;\n  const interestSavedByEarlyPayoff = totalLoanInterest120m
             - interestPaidByTarget;\n\n  const targetDate = new Date('2028-01-01');\n\
             \  const daysToTarget = Math.max(0, Math.floor((targetDate - now) / (1000
@@ -1880,10 +1880,10 @@ cards:
             flex: 1; background: rgba(255, 82, 82, 0.05); border: 1px solid rgba(255,
             82, 82, 0.25); border-radius: 10px; padding: 8px 10px;\">\n          \
             \  <div style=\"font-size: 8.5px; color: rgba(255, 255, 255, 0.45); font-weight:
-            600;\">BBVA Payment</div>\n            <div style=\"font-size: 14px; font-weight:
-            800; color: #ff5252; margin-top: 1px;\">-${fmtEur(bbvaMonthlyCuota)} €</div>\n\
+            600;\">Bank Payment</div>\n            <div style=\"font-size: 14px; font-weight:
+            800; color: #ff5252; margin-top: 1px;\">-${fmtEur(monthlyLoanPayment)} €</div>\n\
             \            <div style=\"font-size: 8px; color: rgba(255, 255, 255, 0.4);\"\
-            >4.80% nominal</div>\n          </div>\n\n          <div style=\"flex:
+            >4.95% nominal</div>\n          </div>\n\n          <div style=\"flex:
             1; background: rgba(0, 230, 118, 0.06); border: 1px solid rgba(0, 230,
             118, 0.2); border-radius: 10px; padding: 8px 10px;\">\n            <div
             style=\"font-size: 8.5px; color: #00e676; font-weight: 600;\">Gas Saved
@@ -1907,7 +1907,7 @@ cards:
             255, 255, 0.6); font-weight: 500;\">\n            <span>This month: ${fmtEur(thisMonthSavings)}
             € (${fmtInt(monthDistKm)} km)</span>\n            <span>Target pace: ~${fmtInt(avgMonthlyKm)}
             km/mo</span>\n          </div>\n        </div>\n      </div>\n\n     \
-            \ <!-- Section 4: BBVA Early Payoff Horizon (Target: New Year 2028) -->\n\
+            \ <!-- Section 4: Auto Loan Early Payoff Horizon (Target: New Year 2028) -->\n\
             \      <div style=\"background: linear-gradient(135deg, rgba(255, 179,
             0, 0.08) 0%, rgba(255, 112, 67, 0.08) 100%); border: 1px solid rgba(255,
             179, 0, 0.35); border-radius: 14px; padding: 12px 14px;\">\n        <div
