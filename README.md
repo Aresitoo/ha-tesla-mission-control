@@ -1,9 +1,22 @@
-# Tesla & V2C Mission Control — Home Assistant Dashboard
+# ⚡ Tesla & V2C Mission Control — Home Assistant Dashboard
 
-An ultra-modern, interactive Tesla and EV Home Charging Mission Control dashboard for Home Assistant, featuring 2D vehicle telemetry, liquid charging animations, real-time government fuel economic benchmarking, and solar charging analytics.
+An ultra-modern, interactive Tesla and EV Home Charging Mission Control dashboard for **Home Assistant**, featuring 2D vehicle telemetry, liquid charging animations, real-time government fuel economic benchmarking, and solar charging analytics.
+
+![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2024.x%2B-blue.svg?logo=home-assistant)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![HACS Cards](https://img.shields.io/badge/Required%20Cards-2%20(button--card%2C%20tesla--view)-orange.svg)
 
 ---
 
+## 📸 Visual Showcase
+
+<p align="center">
+  <img src="assets/tesla_cockpit_hero.png" width="32%" alt="Tesla 2D/3D Cockpit Telemetry" />
+  <img src="assets/tesla_charging_v2c.png" width="32%" alt="V2C Smart EVSE & Charging Costs" />
+  <img src="assets/tesla_fuel_savings.png" width="32%" alt="Economic Fuel & Energy Savings Hub" />
+</p>
+
+---
 ## 📦 What's Included
 
 1. **`tesla_mission_control.yaml`**: The complete Lovelace View YAML containing all 5 cards in a responsive vertical stack.
