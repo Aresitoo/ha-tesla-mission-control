@@ -38,9 +38,9 @@ cards:
     - sensor.tesla_ble_garage_charge_distance_added
     - sensor.tesla_ble_garage_minutes_to_limit
     - sensor.tesla_ble_garage_charging_state
-    - binary_sensor.evse_trydan_charging
-    - binary_sensor.evse_trydan_connected
-    - sensor.evse_trydan_charge_power
+    - binary_sensor.evse_192_168_0_249_charging
+    - binary_sensor.evse_192_168_0_249_connected
+    - sensor.evse_192_168_0_249_charge_power
     - sensor.tesla_ble_garage_tyre_pressure_front_left
     - sensor.tesla_ble_garage_tyre_pressure_front_right
     - sensor.tesla_ble_garage_tyre_pressure_rear_left
@@ -170,11 +170,11 @@ cards:
         \ || document) : document;\n                  const pill = parent ? (parent.id === 'v2c-confirm-pill' ? parent : parent.querySelector('#v2c-confirm-pill'))\
         \ : null;\n                  if (pill) pill.style.display = 'none';\n                  clearTimeout(window._v2cPromptTimer);\n\
         \n                  const sBleState = window._haHass?.states['sensor.tesla_ble_garage_charging_state']?.state || '';\n\
-        \                  const evsePower = parseFloat(window._haHass?.states['sensor.evse_trydan_charge_power']?.state)\
-        \ || 0;\n                  const isPaused = window._haHass?.states['switch.evse_trydan_pause_session']?.state\
+        \                  const evsePower = parseFloat(window._haHass?.states['sensor.evse_192_168_0_249_charge_power']?.state)\
+        \ || 0;\n                  const isPaused = window._haHass?.states['switch.evse_192_168_0_249_pause_session']?.state\
         \ === 'on';\n                  const isCharging = (sBleState.toLowerCase() === 'charging') || (evsePower > 100);\n\
         \n                  const targetAction = (isCharging && !isPaused) ? 'turn_on' : 'turn_off';\n                  window._callTeslaHa('switch',\
-        \ targetAction, { entity_id: 'switch.evse_trydan_pause_session' }, el);\n                };\n\n           \
+        \ targetAction, { entity_id: 'switch.evse_192_168_0_249_pause_session' }, el);\n                };\n\n           \
         \     window._cancelV2cAction = function(event, el) {\n                  if (event) {\n                    if (event.stopPropagation)\
         \ event.stopPropagation();\n                    if (event.preventDefault) event.preventDefault();\n              \
         \    }\n                  const parent = el ? (el.closest('#v2c-confirm-pill') || document) : document;\n        \
@@ -198,10 +198,10 @@ cards:
         \              const energyAdded = (parseFloat(states['sensor.tesla_ble_garage_charge_energy_added']?.state) || 27.3).toFixed(1);\n\
         \              const distAdded = Math.round(parseFloat(states['sensor.tesla_ble_garage_charge_distance_added']?.state)\
         \ || 203);\n\n              // Charging Telemetry & State\n              const minsToLimitRaw = parseFloat(states['sensor.tesla_ble_garage_minutes_to_limit']?.state);\n\
-        \              const evseCharging = states['binary_sensor.evse_trydan_charging']?.state === 'on';\n       \
-        \       const evsePower = parseFloat(states['sensor.evse_trydan_charge_power']?.state) || 0;\n            \
-        \  const evseConnected = states['binary_sensor.evse_trydan_connected']?.state === 'on';\n              const\
-        \ isPaused = states['switch.evse_trydan_pause_session']?.state === 'on';\n              const teslaChargingState\
+        \              const evseCharging = states['binary_sensor.evse_192_168_0_249_charging']?.state === 'on';\n       \
+        \       const evsePower = parseFloat(states['sensor.evse_192_168_0_249_charge_power']?.state) || 0;\n            \
+        \  const evseConnected = states['binary_sensor.evse_192_168_0_249_connected']?.state === 'on';\n              const\
+        \ isPaused = states['switch.evse_192_168_0_249_pause_session']?.state === 'on';\n              const teslaChargingState\
         \ = states['sensor.tesla_ble_garage_charging_state']?.state || 'Disconnected';\n              const isCharging = evseCharging\
         \ || teslaChargingState.toLowerCase() === 'charging' || evsePower > 100;\n              const isPluggedIn = evseConnected\
         \ || isCharging || chargePortDoorOpen;\n\n              let timeLeftText = '';\n              if (!isNaN(minsToLimitRaw)\
@@ -520,7 +520,7 @@ cards:
     hotspots: true
     camera: parked
     entities:
-      charge_cable: binary_sensor.evse_trydan_connected
+      charge_cable: binary_sensor.evse_192_168_0_249_connected
       charge_port: binary_sensor.tesla_ble_garage_charge_flap
       charging: sensor.tesla_ble_garage_charging_state
       frunk: cover.tesla_ble_garage_frunk
@@ -546,19 +546,19 @@ cards:
     double_tap_action:
       action: none
     triggers_update:
-    - sensor.evse_trydan_charge_power
-    - sensor.evse_trydan_charge_energy
-    - sensor.evse_trydan_charge_time
-    - sensor.evse_trydan_photovoltaic_power
-    - sensor.evse_trydan_house_power
-    - binary_sensor.evse_trydan_connected
-    - binary_sensor.evse_trydan_charging
-    - switch.evse_trydan_dynamic_intensity_modulation
-    - switch.evse_trydan_pause_session
-    - switch.evse_trydan_lock_evse
-    - number.evse_trydan_intensity
-    - number.evse_trydan_min_intensity
-    - number.evse_trydan_max_intensity
+    - sensor.evse_192_168_0_249_charge_power
+    - sensor.evse_192_168_0_249_charge_energy
+    - sensor.evse_192_168_0_249_charge_time
+    - sensor.evse_192_168_0_249_photovoltaic_power
+    - sensor.evse_192_168_0_249_house_power
+    - binary_sensor.evse_192_168_0_249_connected
+    - binary_sensor.evse_192_168_0_249_charging
+    - switch.evse_192_168_0_249_dynamic_intensity_modulation
+    - switch.evse_192_168_0_249_pause_session
+    - switch.evse_192_168_0_249_lock_evse
+    - number.evse_192_168_0_249_intensity
+    - number.evse_192_168_0_249_min_intensity
+    - number.evse_192_168_0_249_max_intensity
     - input_select.v2c_charging_profile
     - select.garage_v2c_charge_mode
     styles:
@@ -587,39 +587,39 @@ cards:
         \            }\n\n              // Install V2C Charging Profile & Amps Controllers\n              if (!window._setV2cProfile)\
         \ {\n                window._setV2cProfile = function(profileName, modeNum, el) {\n                  if (el) {\n \
         \                   el.style.transform = 'scale(0.95)';\n                    setTimeout(() => { el.style.transform\
-        \ = ''; }, 140);\n                  }\n                  try {\n                    fetch('http://YOUR_CHARGER_IP/write/DynamicPowerMode='\
+        \ = ''; }, 140);\n                  }\n                  try {\n                    fetch('http://192.168.0.249/write/DynamicPowerMode='\
         \ + modeNum, { mode: 'no-cors' });\n                  } catch(e) {}\n                  if (window._callTeslaHa) {\n\
         \                    window._callTeslaHa('input_select', 'select_option', {\n                      entity_id: 'input_select.v2c_charging_profile',\n\
         \                      option: profileName\n                    }, el);\n                    window._callTeslaHa('rest_command',\
         \ 'v2c_set_dynamic_power_mode', {\n                      mode: modeNum\n                    }, el);\n            \
         \      }\n                };\n\n                window._setV2cAmps = function(amps, el) {\n                  if (el)\
         \ {\n                    el.style.transform = 'scale(0.92)';\n                    setTimeout(() => { el.style.transform\
-        \ = ''; }, 140);\n                  }\n                  try {\n                    fetch('http://YOUR_CHARGER_IP/write/Intensity='\
+        \ = ''; }, 140);\n                  }\n                  try {\n                    fetch('http://192.168.0.249/write/Intensity='\
         \ + amps, { mode: 'no-cors' });\n                  } catch(e) {}\n                  if (window._callTeslaHa) {\n \
-        \                   window._callTeslaHa('number', 'set_value', {\n                      entity_id: 'number.evse_trydan_intensity',\n\
+        \                   window._callTeslaHa('number', 'set_value', {\n                      entity_id: 'number.evse_192_168_0_249_intensity',\n\
         \                      value: amps\n                    }, el);\n                  }\n                };\n\n     \
         \           window._toggleV2cPause = function(currentlyPaused, el) {\n                  if (el) {\n              \
         \      el.style.transform = 'scale(0.92)';\n                    setTimeout(() => { el.style.transform = ''; }, 140);\n\
         \                  }\n                  const nextPause = currentlyPaused ? 0 : 1;\n                  try {\n    \
-        \                fetch('http://YOUR_CHARGER_IP/write/Paused=' + nextPause, { mode: 'no-cors' });\n                 \
+        \                fetch('http://192.168.0.249/write/Paused=' + nextPause, { mode: 'no-cors' });\n                 \
         \ } catch(e) {}\n                  if (window._callTeslaHa) {\n                    window._callTeslaHa('switch', currentlyPaused\
-        \ ? 'turn_off' : 'turn_on', {\n                      entity_id: 'switch.evse_trydan_pause_session'\n      \
+        \ ? 'turn_off' : 'turn_on', {\n                      entity_id: 'switch.evse_192_168_0_249_pause_session'\n      \
         \              }, el);\n                  }\n                };\n              }\n\n              const isConnected\
-        \ = states['binary_sensor.evse_trydan_connected']?.state === 'on';\n              const isCharging = states['binary_sensor.evse_trydan_charging']?.state\
-        \ === 'on';\n              const isLocked = states['switch.evse_trydan_lock_evse']?.state === 'on';\n     \
-        \         const paused = states['switch.evse_trydan_pause_session']?.state === 'on';\n              const dynamicMod\
-        \ = states['switch.evse_trydan_dynamic_intensity_modulation']?.state === 'on';\n\n              const chargePwrW\
-        \ = Math.round(parseFloat(states['sensor.evse_trydan_charge_power']?.state) || 0);\n              const chargePwrDisplay\
+        \ = states['binary_sensor.evse_192_168_0_249_connected']?.state === 'on';\n              const isCharging = states['binary_sensor.evse_192_168_0_249_charging']?.state\
+        \ === 'on';\n              const isLocked = states['switch.evse_192_168_0_249_lock_evse']?.state === 'on';\n     \
+        \         const paused = states['switch.evse_192_168_0_249_pause_session']?.state === 'on';\n              const dynamicMod\
+        \ = states['switch.evse_192_168_0_249_dynamic_intensity_modulation']?.state === 'on';\n\n              const chargePwrW\
+        \ = Math.round(parseFloat(states['sensor.evse_192_168_0_249_charge_power']?.state) || 0);\n              const chargePwrDisplay\
         \ = chargePwrW >= 1000 ? (chargePwrW / 1000).toFixed(2) + ' kW' : chargePwrW + ' W';\n              const currentAmps\
-        \ = Math.round(parseFloat(states['number.evse_trydan_intensity']?.state) || 0);\n              const minAmps\
-        \ = Math.round(parseFloat(states['number.evse_trydan_min_intensity']?.state) || 6);\n              const maxAmps\
-        \ = Math.round(parseFloat(states['number.evse_trydan_max_intensity']?.state) || 29);\n\n              const\
-        \ solarPwrW = Math.round(parseFloat(states['sensor.evse_trydan_photovoltaic_power']?.state) || 0);\n      \
+        \ = Math.round(parseFloat(states['number.evse_192_168_0_249_intensity']?.state) || 0);\n              const minAmps\
+        \ = Math.round(parseFloat(states['number.evse_192_168_0_249_min_intensity']?.state) || 6);\n              const maxAmps\
+        \ = Math.round(parseFloat(states['number.evse_192_168_0_249_max_intensity']?.state) || 29);\n\n              const\
+        \ solarPwrW = Math.round(parseFloat(states['sensor.evse_192_168_0_249_photovoltaic_power']?.state) || 0);\n      \
         \        const solarPwrDisplay = solarPwrW >= 1000 ? (solarPwrW / 1000).toFixed(2) + ' kW' : solarPwrW + ' W';\n\n\
-        \              const housePwrW = Math.round(parseFloat(states['sensor.evse_trydan_house_power']?.state) ||\
+        \              const housePwrW = Math.round(parseFloat(states['sensor.evse_192_168_0_249_house_power']?.state) ||\
         \ 0);\n              const housePwrDisplay = housePwrW >= 1000 ? (housePwrW / 1000).toFixed(2) + ' kW' : housePwrW\
-        \ + ' W';\n\n              const sessionKwh = (parseFloat(states['sensor.evse_trydan_charge_energy']?.state)\
-        \ || 0).toFixed(2);\n              const chargeTimeSec = parseFloat(states['sensor.evse_trydan_charge_time']?.state)\
+        \ + ' W';\n\n              const sessionKwh = (parseFloat(states['sensor.evse_192_168_0_249_charge_energy']?.state)\
+        \ || 0).toFixed(2);\n              const chargeTimeSec = parseFloat(states['sensor.evse_192_168_0_249_charge_time']?.state)\
         \ || 0;\n              let sessionDurationText = '0m';\n              if (chargeTimeSec > 0) {\n                const\
         \ hours = Math.floor(chargeTimeSec / 3600);\n                const mins = Math.round((chargeTimeSec % 3600) / 60);\n\
         \                sessionDurationText = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;\n              }\n\n       \
@@ -642,7 +642,7 @@ cards:
         \ 12px; color: ${isConnected ? '#00e676' : '#78909c'};\"></ha-icon>\n                        <span>${isConnected ?\
         \ (isCharging ? 'Charging' : 'Connected') : 'Unplugged'}</span>\n                      </div>\n\n                \
         \      <!-- EVSE Lock Pill -->\n                      <div onclick=\"window._callTeslaHa('switch', 'toggle', {entity_id:\
-        \ 'switch.evse_trydan_lock_evse'}, this);\" style=\"cursor: pointer; display: flex; align-items: center; gap:\
+        \ 'switch.evse_192_168_0_249_lock_evse'}, this);\" style=\"cursor: pointer; display: flex; align-items: center; gap:\
         \ 4px; padding: 4px 8px; border-radius: 12px; background: ${isLocked ? 'rgba(255, 82, 82, 0.15)' : 'rgba(255, 255,\
         \ 255, 0.05)'}; border: 1px solid ${isLocked ? 'rgba(255, 82, 82, 0.4)' : 'rgba(255, 255, 255, 0.1)'}; font-size:\
         \ 9.5px; font-weight: 700; color: ${isLocked ? '#ff5252' : 'rgba(255, 255, 255, 0.7)'};\">\n                     \
@@ -714,7 +714,7 @@ cards:
         \                      <div style=\"font-size: 12px; font-weight: 800; color: #ffffff;\">Dynamic Modulation</div>\n\
         \                      <div style=\"font-size: 9px; color: rgba(255, 255, 255, 0.5);\">Auto-adjusts Amps to home &\
         \ solar</div>\n                    </div>\n                    <div style=\"display: flex; gap: 6px;\">\n        \
-        \              <div onclick=\"window._callTeslaHa('switch', 'toggle', {entity_id: 'switch.evse_trydan_dynamic_intensity_modulation'},\
+        \              <div onclick=\"window._callTeslaHa('switch', 'toggle', {entity_id: 'switch.evse_192_168_0_249_dynamic_intensity_modulation'},\
         \ this);\" style=\"cursor: pointer; padding: 5px 10px; border-radius: 8px; background: ${dynamicMod ? 'rgba(0, 230,\
         \ 118, 0.2)' : 'rgba(255, 255, 255, 0.05)'}; border: 1px solid ${dynamicMod ? '#00e676' : 'rgba(255, 255, 255, 0.1)'};\
         \ font-size: 10px; font-weight: 800; color: ${dynamicMod ? '#00e676' : '#ffffff'};\">\n                        ${dynamicMod\
@@ -1004,7 +1004,7 @@ cards:
     triggers_update:
     - sensor.fuel_price_gasolina_95
     - sensor.tesla_ble_garage_odometer
-    - sensor.tesla_monthly_mileage
+    - sensor.mr_white_monthly_mileage
     - sensor.v2c_charging_stats
     - sensor.tesla_ble_garage_range
     - sensor.tesla_ble_garage_charge_level
@@ -1048,7 +1048,7 @@ cards:
       }
     custom_fields:
       savings_hub: "[[[\n  const cardElement = this;\n  const odoEnt = states['sensor.tesla_ble_garage_odometer'];\n  const\
-        \ fuelEnt = states['sensor.fuel_price_gasolina_95'];\n  const monthDistEnt = states['sensor.tesla_monthly_mileage'];\n\
+        \ fuelEnt = states['sensor.fuel_price_gasolina_95'];\n  const monthDistEnt = states['sensor.mr_white_monthly_mileage'];\n\
         \  const rangeEnt = states['sensor.tesla_ble_garage_range'];\n  const socEnt = states['sensor.tesla_ble_garage_charge_level'];\n\
         \  const energyAddedEnt = states['sensor.tesla_ble_garage_charge_energy_added'];\n  const distAddedEnt = states['sensor.tesla_ble_garage_charge_distance_added'];\n\
         \n  const odoKm = parseFloat(odoEnt?.state) || 14997.2;\n  const gasPrice = parseFloat(fuelEnt?.state) || 1.805;\n\
