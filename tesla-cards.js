@@ -39,7 +39,6 @@
       const states = this._hass.states;
       const hass = this._hass;
       const config = this._config;
-      const cardElement = this;
 
       try {
         const html = this.renderContent(states, hass, config);
@@ -73,6 +72,14 @@
 
   // 1. Tesla 2D Interactive Cockpit & Vehicle Controls Card
   class TeslaCockpitCard extends BaseTeslaCard {
+    static getStubConfig() {
+      return {
+        battery_level: "sensor.tesla_battery_level",
+        battery_range: "sensor.tesla_battery_range",
+        charge_limit: "number.tesla_charge_limit",
+        odometer: "sensor.tesla_odometer"
+      };
+    }
     get cardBorder() { return 'rgba(216, 199, 168, 0.22)'; }
     renderContent(states, hass, config) {
 // Store live hass instance globally
@@ -766,6 +773,12 @@
 
   // 2. V2C Trydan Smart Dynamic EVSE Charger Card
   class TeslaChargerCard extends BaseTeslaCard {
+    static getStubConfig() {
+      return {
+        charging_power: "sensor.v2c_trydan_charging_power",
+        intensity: "number.v2c_trydan_intensity"
+      };
+    }
     get cardBorder() { return 'rgba(0, 229, 255, 0.22)'; }
     renderContent(states, hass, config) {
 if (typeof hass !== 'undefined' && hass) {
@@ -989,6 +1002,9 @@ if (typeof hass !== 'undefined' && hass) {
 
   // 3. Car Charging & Session Energy Costs Card
   class TeslaChargingCostsCard extends BaseTeslaCard {
+    static getStubConfig() {
+      return {};
+    }
     get cardBorder() { return 'rgba(0, 230, 118, 0.22)'; }
     renderContent(states, hass, config) {
 const cardElement = this;
@@ -1380,6 +1396,12 @@ const cardElement = this;
 
   // 4. MITECO Fuel Savings Benchmark Card
   class TeslaSavingsCard extends BaseTeslaCard {
+    static getStubConfig() {
+      return {
+        fuel_price_gasolina_95: "sensor.fuel_price_gasolina_95",
+        monthly_mileage: "sensor.tesla_monthly_mileage"
+      };
+    }
     get cardBorder() { return 'rgba(255, 152, 0, 0.22)'; }
     renderContent(states, hass, config) {
 const cardElement = this;
@@ -1665,6 +1687,9 @@ const cardElement = this;
 
   // 5. Capital Recovery & Early Payoff ROI Dossier Card
   class TeslaRoiCard extends BaseTeslaCard {
+    static getStubConfig() {
+      return {};
+    }
     get cardBorder() { return 'rgba(156, 39, 176, 0.25)'; }
     renderContent(states, hass, config) {
 const cardElement = this;
@@ -1909,6 +1934,9 @@ const cardElement = this;
 
   // 6. Unified Mission Control Deck (All-in-one)
   class TeslaMissionControlDeck extends HTMLElement {
+    static getStubConfig() {
+      return {};
+    }
     constructor() {
       super();
       this.attachShadow({ mode: 'open' });
@@ -1962,8 +1990,23 @@ const cardElement = this;
   }
   customElements.define('tesla-mission-control-deck', TeslaMissionControlDeck);
 
+  // Register in HA graphical card picker
+  window.customCards = window.customCards || [];
+  [
+    { type: 'tesla-cockpit-card', name: 'Tesla 2D Cockpit Card', description: 'Interactive Top-Down Vehicle Telemetry, BLE Controls & Tire Pressure' },
+    { type: 'tesla-charger-card', name: 'Tesla V2C Charger Card', description: 'V2C Trydan Smart Dynamic EVSE Modulation & Live Controls' },
+    { type: 'tesla-charging-costs-card', name: 'Tesla Charging Costs Card', description: 'Charging Session History, Solar Split & Monthly Cost Inspector' },
+    { type: 'tesla-savings-card', name: 'Tesla Fuel Savings Card', description: 'MITECO Government Fuel Benchmark & Petrol vs EV Comparison' },
+    { type: 'tesla-roi-card', name: 'Tesla ROI & Capital Recovery Card', description: 'Vehicle Payoff Progress & Financing Elimination Calculator' },
+    { type: 'tesla-mission-control-deck', name: 'Tesla Mission Control Deck', description: 'Unified Tesla & EV All-In-One Mission Control Deck' }
+  ].forEach(card => {
+    const idx = window.customCards.findIndex(c => c.type === card.type);
+    if (idx >= 0) window.customCards.splice(idx, 1);
+    window.customCards.push(card);
+  });
+
   console.info(
-    '%c TESLA-CARDS %c v1.0.0 Loaded Successfully ',
+    '%c TESLA-CARDS %c v1.0.1 Loaded Successfully ',
     'color: white; background: #e53935; font-weight: bold; border-radius: 4px 0 0 4px;',
     'color: #e53935; background: #0e131a; font-weight: bold; border-radius: 0 4px 4px 0;'
   );
