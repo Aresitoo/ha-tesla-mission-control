@@ -57,60 +57,57 @@ An ultra-modern, interactive Tesla and EV Home Charging Mission Control dashboar
 
 ---
 
-## ⚙️ Prerequisites (HACS Frontend Cards)
+## 🚀 1-Click HACS Installation (Recommended)
 
-Zero bloat — this entire dashboard requires only **ONE** custom card:
-* **[button-card](https://github.com/custom-cards/button-card)** (`custom:button-card`) — *Required for all 5 cards.*
+You can now install all modular cards with **1 click via HACS**:
 
-*(No 3D WebGL card or exotic dependencies required! The entire vehicle cockpit is rendered natively in vector 2D).*
+1. In Home Assistant, open **HACS** $\rightarrow$ Click the **Three Dots (⋮)** in the top right $\rightarrow$ **Custom repositories**.
+2. Paste: `https://github.com/Aresitoo/ha-tesla-mission-control`
+3. Category: **Dashboard** (or **Lovelace** / **Plugin**).
+4. Click **Add**, find **Tesla & EV Mission Control Cards**, and click **Download**!
+
+Once installed, all modular cards are available across any of your dashboards with zero dependencies:
+
+### 1. Interactive 2D Top-Down Cockpit Card
+```yaml
+type: custom:tesla-cockpit-card
+```
+
+### 2. V2C Trydan Smart EVSE Charger Modulation Card
+```yaml
+type: custom:tesla-charger-card
+```
+
+### 3. Car Charging & Session Energy Costs Card
+```yaml
+type: custom:tesla-charging-costs-card
+```
+
+### 4. MITECO Fuel Price & Petrol vs EV Savings Card
+```yaml
+type: custom:tesla-savings-card
+```
+
+### 5. Capital Recovery & Early Payoff ROI Dossier Card
+```yaml
+type: custom:tesla-roi-card
+```
+
+### 6. Unified Mission Control Deck (All Cards in One)
+```yaml
+type: custom:tesla-mission-control-deck
+```
 
 ---
 
-## 🔌 Entity Mapping Guide
+## 📋 Alternative: Full YAML View Import (Raw Configuration Editor)
 
-Replace the following entity names in the YAML with your own vehicle and charger entities:
+If you prefer to import the entire complete dashboard view as raw YAML instead of using the custom cards:
 
-### 1. Tesla Vehicle Telemetry
-| Dashboard Entity | Purpose | Typical HA Entity |
-| :--- | :--- | :--- |
-| `sensor.tesla_ble_garage_charge_level` | Battery SoC (%) | `sensor.<car>_battery_level` |
-| `sensor.tesla_ble_garage_range` | Rated Range (km) | `sensor.<car>_battery_range` |
-| `number.tesla_ble_garage_charging_limit` | Charge Limit (%) | `number.<car>_charge_limit` |
-| `sensor.tesla_ble_garage_odometer` | Total Odometer (km) | `sensor.<car>_odometer` |
-| `lock.tesla_ble_garage_lock_car` | Vehicle Lock | `lock.<car>_doors` |
-| `cover.tesla_ble_garage_boot` | Rear Trunk | `cover.<car>_trunk` |
-| `cover.tesla_ble_garage_frunk` | Front Frunk | `cover.<car>_frunk` |
-| `switch.tesla_ble_garage_sentry_mode` | Sentry Mode | `switch.<car>_sentry_mode` |
-| `switch.tesla_ble_garage_climate` | Climate Power | `climate.<car>_climate` |
-| `number.tesla_ble_garage_climate_temperature` | Climate Target Temp | Climate entity attribute |
-| `sensor.tesla_ble_garage_tyre_pressure_*` | 4 Tire Pressures (bar) | `sensor.<car>_tire_pressure_*` |
-| `sensor.tesla_ble_garage_charge_energy_added` | Energy Added (kWh) | `sensor.<car>_charge_energy_added` |
-| `sensor.tesla_ble_garage_charge_distance_added`| Range Added (km) | `sensor.<car>_charge_distance_added`|
-
-### 2. Fuel Savings & Helpers
-| Dashboard Entity | Purpose | Setup |
-| :--- | :--- | :--- |
-| `sensor.fuel_price_gasolina_95` | Live Gas 95 Price (€/L) | Use provided `tesla_fuel_savings.yaml` |
-| `sensor.tesla_monthly_mileage` | Monthly Driven Km | Create a `utility_meter` helper tracking your odometer with `cycle: monthly` |
-
-### 3. EV Charger (V2C Trydan / Generic Wallbox)
-*Entities starting with `sensor.evse_trydan_*` belong to the V2C Trydan integration. If you use a Tesla Wall Connector or Easee/Wallbox, map your charger's power/current entities or adjust Card 1.*
-
----
-
-## 🚀 How to Install
-
-1. **Install HACS dependency:** Install `button-card` via HACS.
-2. **Add Fuel Pricing Sensor (Optional):**
-   Copy `tesla_fuel_savings.yaml` into your Home Assistant `config/packages/` folder and reload Home Assistant YAML.
-3. **Add Monthly Mileage Helper:**
-   Go to **Settings → Devices & Services → Helpers → Create Helper → Utility Meter**:
-   - Name: `Tesla Monthly Mileage`
-   - Input Sensor: Your car's odometer sensor
-   - Meter Reset Cycle: `Monthly`
-4. **Import Dashboard View:**
-   - In Home Assistant, open your dashboard, enter Edit mode, click **Raw Configuration Editor**.
-   - Add the contents of `tesla_mission_control.yaml` to your `views:` array.
+1. Install **`button-card`** via HACS (`HACS -> Frontend -> button-card`).
+2. Download or copy [`tesla_mission_control.yaml`](./tesla_mission_control.yaml) from this repository.
+3. In Home Assistant, navigate to your desired dashboard, click **Edit Dashboard** $\rightarrow$ **Raw Configuration Editor**.
+4. Paste the view into your `views:` array and save.
 
 ---
 
